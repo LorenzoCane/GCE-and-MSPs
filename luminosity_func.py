@@ -8,25 +8,39 @@ from scipy.special import gamma
 import os
 
 #****************************************************************************
-min = 1.0e29
-max = 1.0e37
+#LUMINOSITY FUNCTION EVALUATION
+
+min = 1.0e29       #erg s^(-1)     #min for graph
+max = 1.0e38       #erg s^(-1)     #max for graph
+r = 1.11e-46       #cm^(-2)        #flux/lum ratio
 
 #power law - wavelet 1
-l_m1 = 1.0e29  #L_min : low flux step-func cutoff
-l_M1 = 1.0e35  #L_MAX : high flux exp cutoff
+l_m1 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
+l_M1 = 1.0e35  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha1 = 1.94  #slope
 
-l= np.linspace(min, max,100000)
+l= np.linspace(min, max,10000)
+f_pl = l * r
 
+p_pl1 = l**(-alpha1) * np.exp(-l/l_M1) / (gamma((l_m1/l_M1)) * l_M1**(1.0-alpha1)) #power law lum funcs
 
-p_pl = l**(-alpha1)*np.exp(-l/l_M1) / (gamma((l_m1/l_M1)) * l_M1**(1.0-alpha1))
+#*****************************************************************************
+#PLOTS
 
-fig, ax = plt.subplots()
-plt.ylim(1.0e-45,1.0e-25)
-plt.xlim(min, 1.0e38)
+fig, ax1 = plt.subplots()
+ax2 = ax1.twiny()
 
+ax1.set_xticks(np.geomspace(1.0e30, 1.0e38, 5))
+ax2.set_xticks(np.geomspace(1.0e-15, 1.0e-9, 4))
+ax1.set_yticks(np.geomspace(1.0e-45, 1.e-29, 5))
 
+ax1.set_xlabel("Luminosity L [erg / s]")
+ax2.set_xlabel(r'Flux F [erg / $\mathregular{cm^2}$ / s]')
+ax1.set_ylabel("dN / dL")
 
-ax.loglog(l,p_pl)
+ax1.loglog(l,p_pl1)
+ax2.loglog(f_pl, p_pl1)
+
+plt.ylim(1.0e-45 , 1.0e-29)
 
 plt.savefig(os.path.join('pl.png'))
