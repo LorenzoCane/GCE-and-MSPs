@@ -65,7 +65,7 @@ p_pl1 = power_law(l , alpha1 , l_m1 , l_M1) #ming power law lum func
 
 #-----------------------------------------------------------------------------
 #wavelet 2 - power law 
-l_m2 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
+l_m2 = 1.0e30  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M2 = 7.0e34  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha2 = 1.5  #slope
 
@@ -134,7 +134,7 @@ ax2.set_xticks(np.geomspace(1.0e-15, 1.0e-9, 4))
 
 ax1.set_xlabel("Luminosity L [erg / s]")
 ax2.set_xlabel(r'Flux F [erg / $\mathregular{cm^2}$ / s]') 
-ax1.set_ylabel("dN / dL")
+ax1.set_ylabel(r'dN / dL')
 
 plt.ylim(1.0e-45 , 1.2e-29)
 ax1.set_xlim(min, max)
@@ -144,12 +144,10 @@ ax1.legend()
 plt.savefig(os.path.join('pl.png'))
 
 #----------------------------------------------------------------------------
-#e-fold plot
+#e-fold in L plot
 
 fig2 , ax3 = plt.subplots()
 ax4 = ax3.twiny()
-
-
 
 ax3.loglog(l, l*p_pl1, color = 'lightblue', label = 'Wavelet 1')
 ax3.loglog(l, l*p_pl2, color = 'green', label = 'Wavelet 2 ')
@@ -175,3 +173,33 @@ ax4.set_xlim(min*r, max*r)
 ax3.legend()
 
 plt.savefig(os.path.join('1efold.png'))
+
+#----------------------------------------------------------------------------
+#2e-folds in L plot
+
+fig3 , ax5 = plt.subplots()
+ax6 = ax5.twiny()
+
+ax5.loglog(l, l*l*p_pl1, color = 'lightblue', label = 'Wavelet 1')
+ax5.loglog(l, l*l*p_pl2, color = 'green', label = 'Wavelet 2 ')
+ax5.loglog(l, l*l*p_glc, color = 'darkorange', linestyle = ls1, label= 'GLC')
+ax5.loglog(l, l*l*p_gce, color = 'fuchsia', linestyle = ls1, label = 'GCE')
+ax5.loglog(l, l*l*p_aic, color = 'red' , linestyle = ls1 , label = 'AIC')
+ax5.loglog(l, l*l*p_disk, color = 'gray' , linestyle = ls2, label = 'Disk')
+ax5.loglog(l, l*l*p_nptf, color = 'black', linestyle = ls2,  label = 'NPTF')
+ax6.loglog(f_pl, l*l* p_pl1, color = 'lightblue')
+
+#graphical config
+ax5.set_yticks(np.geomspace(1.0e28, 1.0e34, 3))
+ax5.set_xticks(np.geomspace(1.0e30, 1.0e38, 5))
+ax6.set_xticks(np.geomspace(1.0e-15, 1.0e-9, 4))
+
+ax5.set_xlabel("Luminosity L [erg / s]")
+ax6.set_xlabel(r'Flux F [erg / $\mathregular{cm^2}$ / s]')
+ax5.set_ylabel(r' $\mathregular{L^2}$ dN / dL [$\mathregular{erg^2}$ / $\mathregular{s^2}$]')
+
+plt.ylim(1.0e27, 1.0e35)
+ax5.set_xlim(min, max)
+ax6.set_xlim(min*r, max*r)
+ax5.legend()
+plt.savefig(os.path.join('2efold.png'))
