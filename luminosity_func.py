@@ -65,7 +65,7 @@ p_pl1 = power_law(l , alpha1 , l_m1 , l_M1) #ming power law lum func
 
 #-----------------------------------------------------------------------------
 #wavelet 2 - power law 
-l_m2 = 1.0e30  #erg s^(-1)  #L_min : low flux step-func cutoff
+l_m2 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M2 = 7.0e34  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha2 = 1.5  #slope
 
