@@ -12,7 +12,7 @@ import os
 
 #power law lum func(high flux exp c-o, low flux step c-o)
 def power_law (l, alpha , l_min , l_max):   #alpha: slope, l_min = step c-o, l_max: exp c-o               
-    den = gamma((l_min/l_max)) * l_max**(1-alpha)
+    den = gamma((l_min/l_max)) * (l_max)**(1-alpha)
     num = l**(-alpha) * np.exp(-l/l_max)
 
     return num / den 
@@ -177,7 +177,7 @@ plt.savefig(os.path.join('1efold.png'))
 #----------------------------------------------------------------------------
 #2e-folds in L plot
 
-fig3 , ax5 = plt.subplots()
+fig3 , ax5 = plt.subplots(figsize=(11,5))
 ax6 = ax5.twiny()
 
 ax5.loglog(l, l*l*p_pl1, color = 'lightblue', label = 'Wavelet 1')
