@@ -4,7 +4,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import gamma
+from scipy.special import gammaincc, gamma
 import os
 
 #****************************************************************************
@@ -12,10 +12,10 @@ import os
 
 #power law lum func(high flux exp c-o, low flux step c-o)
 def power_law (l, alpha , l_min , l_max):   #alpha: slope, l_min = step c-o, l_max: exp c-o               
-    den = gamma((l_min/l_max)) * (l_max)**(1-alpha)
+    den = 5.84e-28
     num = l**(-alpha) * np.exp(-l/l_max)
 
-    return num / den 
+    return num / den
 #-----------------------------------------------------------------------------
 
 #log normal lum func
@@ -136,7 +136,7 @@ ax1.set_xlabel("Luminosity L [erg / s]")
 ax2.set_xlabel(r'Flux F [erg / $\mathregular{cm^2}$ / s]') 
 ax1.set_ylabel(r'dN / dL')
 
-plt.ylim(1.0e-45 , 1.2e-29)
+plt.ylim(1.0e-45 , 1.2e-27)
 ax1.set_xlim(min, max)
 ax2.set_xlim(min*r, max*r)
 ax1.legend()
@@ -177,7 +177,7 @@ plt.savefig(os.path.join('1efold.png'))
 #----------------------------------------------------------------------------
 #2e-folds in L plot
 
-fig3 , ax5 = plt.subplots(figsize=(11,5))
+fig3 , ax5 = plt.subplots()
 ax6 = ax5.twiny()
 
 ax5.loglog(l, l*l*p_pl1, color = 'lightblue', label = 'Wavelet 1')
