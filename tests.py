@@ -16,7 +16,7 @@ import os
 def integrand(t, a):
     return t**(a-1) * np.exp(-t)
 
-def gamma_inc(s, x):
-    return integrate.quad(integrand, x,100000000, args=(s))[0]
+def gamma_inc(s,x):
+    return integrate.quad(integrand, 1.0e-6 ,1000000000,  args=(s))
 
-print(gamma_inc(-0.94,10**(-6)))
+print(gamma_inc(-0.94, 1))

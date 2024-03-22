@@ -4,18 +4,21 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import gammaincc, gamma
+from scipy.special import gammaincc,gamma, exp1
 import os
 
 #****************************************************************************
 #LUMINOSITY FUNCTIONS DEFINITIONS
 
 #power law lum func(high flux exp c-o, low flux step c-o)
-def power_law (l, alpha , l_min , l_max):   #alpha: slope, l_min = step c-o, l_max: exp c-o               
-    den = 5.84e-28
+def power_law (l, alpha , l_min , l_max, a):   #alpha: slope, l_min = step c-o, l_max: exp c-o               
+    if (a):
+        den =5.84e-28
+    else:
+        den = 6.31e-15
     num = l**(-alpha) * np.exp(-l/l_max)
 
-    return num / den
+    return num / den 
 #-----------------------------------------------------------------------------
 
 #log normal lum func
@@ -61,7 +64,7 @@ l_m1 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M1 = 1.0e35  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha1 = 1.94  #slope
 
-p_pl1 = power_law(l , alpha1 , l_m1 , l_M1) #ming power law lum func
+p_pl1 = power_law(l , alpha1 , l_m1 , l_M1, True) #ming power law lum func
 
 #-----------------------------------------------------------------------------
 #wavelet 2 - power law 
@@ -69,7 +72,7 @@ l_m2 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M2 = 7.0e34  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha2 = 1.5  #slope
 
-p_pl2 = power_law(l, alpha2, l_m2, l_M2) #bartles power law lum funcs
+p_pl2 = power_law(l, alpha2, l_m2, l_M2, False) #bartles power law lum funcs
 
 #-----------------------------------------------------------------------------
 #GLC - log normal
