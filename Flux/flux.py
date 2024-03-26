@@ -2,11 +2,25 @@
 #import
 
 import numpy as np
-import math
 import matplotlib.pyplot as plt
-from scipy.special import gammaincc,gamma, exp1
+from iminuit import Minuit
+from iminuit.cost import LeastSquares
 import os
 
+#useful functions
+
+#broken power law function (be carefull about exponential renorm)  
+def broken_pl(x, norm, x_b, n1, n2):             #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index               
+    bpl = []
+
+    for a in range(0, len(x)):
+        if x[a] < x_b:
+            frac = (x[a]/x_b)**(2-n1)
+        else:
+            frac = (x[a]/x_b)**(2-n2)
+        bpl.append(norm *frac)
+    
+    return np.array(bpl)
 #****************************************************************
 #Import data of Calore et al. 2015
 
@@ -27,14 +41,30 @@ class Data(object):
 
 d = Data() 
 
+#--------------------------------------------------------------------
+#Fit with a broken power law
+l = LeastSquares(d.emeans, d.flux, d.flux_err, broken_pl) 
+m = Minuit(l, 1.0e-6, 2, 1.42, 2.6, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
+
+m.migrad()
+m.hesse()
+
+flux_fit = broken_pl(d.emeans, *m.values)
+print(m.values)
+#--------------------------------------------------------------------
+#Plot
+
 fig, ax = plt.subplots()
+
 ax.loglog()
 ax.set_xlim(1.0e-1, 1.0e2)
-ax.set_ylim(1.0e-9, 1.0e-6)
+ax.set_ylim(1.0e-9, 1.0e-5)
 ax.set_xlabel(r'Energy $E_\gamma$ [GeV]')
 ax.set_ylabel(r'Flux $F_\gamma$ [GeV / $\mathregular{cm^2}$ / s / sr]')
+
 ax = plt.errorbar(d.emeans,np.multiply(d.flux,1), yerr = d.flux_err,
-color='#00A693', capsize=1, capthick=1,ls='',
+color='red', capsize=1, capthick=1,ls='',
 elinewidth=0.5,marker='o',markersize=3, label='Template fitting')#,0label='Flux with stat. errors')
+plt.plot(d.emeans, flux_fit, color = "blue")
 
 plt.savefig(os.path.join('flux.png'))
