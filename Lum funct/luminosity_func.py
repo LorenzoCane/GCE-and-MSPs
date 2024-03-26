@@ -10,7 +10,7 @@ import os
 #****************************************************************************
 #LUMINOSITY FUNCTIONS DEFINITIONS
 
-#power law lum func(high flux exp c-o, low flux step c-o)
+# array power law func(high flux exp c-o, low flux step c-o)
 def power_law (l, alpha , l_min , l_max, a):   #alpha: slope, l_min = step c-o, l_max: exp c-o               
     if (a):
         den =5.84e-28
@@ -21,7 +21,7 @@ def power_law (l, alpha , l_min , l_max, a):   #alpha: slope, l_min = step c-o, 
     return num / den 
 #-----------------------------------------------------------------------------
 
-#log normal lum func
+# array log normal func
 def log_norm (l, l_0 , sigma):                          
     num = np.log10(np.e)
     den = sigma * l * (2*np.pi)**0.5 
@@ -30,7 +30,7 @@ def log_norm (l, l_0 , sigma):
     return num * exp / den 
 #-----------------------------------------------------------------------------
 
-#broken power law lum func
+# array broken power law lum func
 def broken_pl(l, l_b, n1, n2):             #l_b: broken point, n1: 1st part index, n2: 2nd part index               
     norm = (1 - n1) * (1 -n2) / l_b / (n1 - n2)
     frac = 1.0
