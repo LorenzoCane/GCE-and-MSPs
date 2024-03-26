@@ -3,24 +3,46 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.integrate as integrate
 from iminuit import Minuit
 from iminuit.cost import LeastSquares
+from jacobi import propagate
 import os
+
+#****************************************************************
+#****************************************************************
 
 #useful functions
 
-#broken power law function (be carefull about exponential renorm)  
-def broken_pl(x, norm, x_b, n1, n2):             #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index               
+#array broken power law function  (be carefull about exponential renorm)  
+def broken_pl_arr(x, norm, x_b, n1, n2): #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index               
     bpl = []
 
     for a in range(0, len(x)):
-        if x[a] < x_b:
-            frac = (x[a]/x_b)**(2-n1)
+        frac = x[a] / x_b
+        if frac < 1:
+            frac = frac**(2-n1)
         else:
-            frac = (x[a]/x_b)**(2-n2)
+            frac = frac**(2-n2)
         bpl.append(norm *frac)
     
     return np.array(bpl)
+#-------------------------------------------------------
+#broken power law function  (be carefull about exponential renorm)  
+
+def broken_pl(x, norm, x_b, n1, n2):   #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index               
+    frac = x / x_b
+    if frac < 1:
+        frac = frac**(2-n1)
+    else:
+        frac = frac**(2-n2)
+        
+    return (norm *frac)
+#-------------------------------------------------------
+
+def GeVtoerg(x):
+    return x * 0.00160218
+
 #****************************************************************
 #Import data of Calore et al. 2015
 
@@ -41,17 +63,26 @@ class Data(object):
 
 d = Data() 
 
-#--------------------------------------------------------------------
+#****************************************************************
 #Fit with a broken power law
-l = LeastSquares(d.emeans, d.flux, d.flux_err, broken_pl) 
+l = LeastSquares(d.emeans, d.flux, d.flux_err, broken_pl_arr) 
 m = Minuit(l, 1.0e-6, 2, 1.42, 2.6, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
 
 m.migrad()
 m.hesse()
+#print(repr(m.params))
 
-flux_fit = broken_pl(d.emeans, *m.values)
-print(m.values)
-#--------------------------------------------------------------------
+en = np.geomspace(d.emeans[0], d.emeans[-1])
+flux_fit = broken_pl_arr(en, *m.values)
+#y, ycov = propagate(lambda norm, xb, n1, n2: broken_pl(d.emeans, norm, xb, n1, n2)[1], m.values, m.covariance)
+#****************************************************************
+#Calculation of the total flux
+
+I = integrate.quad(broken_pl, 0.1, 10, args=(1.0e-6, 2.06, 1.42, 2.63))
+print("Total Flux =" , I[0], " [GeV/cm^2/s/sr] = ", GeVtoerg(I[0]) , "[erg/cm^2/s/sr]")
+
+
+#****************************************************************
 #Plot
 
 fig, ax = plt.subplots()
@@ -63,8 +94,11 @@ ax.set_xlabel(r'Energy $E_\gamma$ [GeV]')
 ax.set_ylabel(r'Flux $F_\gamma$ [GeV / $\mathregular{cm^2}$ / s / sr]')
 
 ax = plt.errorbar(d.emeans,np.multiply(d.flux,1), yerr = d.flux_err,
-color='red', capsize=1, capthick=1,ls='',
-elinewidth=0.5,marker='o',markersize=3, label='Template fitting')#,0label='Flux with stat. errors')
-plt.plot(d.emeans, flux_fit, color = "blue")
+color='black', capsize=1, capthick=1,ls='',
+elinewidth=0.5,marker='o',markersize=3, label='Flux data from Calore et al. 2015')
+
+plt.plot(en, flux_fit, color = "red", ls='-.', label = 'Broken power law fit')
+
+plt.legend()
 
 plt.savefig(os.path.join('flux.png'))
