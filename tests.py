@@ -31,4 +31,22 @@ def int(x, b):
 
 i1 = integrate.quad(int, l_min , l_max, args=(1))[0]
 i2 = integrate.quad(int, b_min , b_max, args=(1))[0]
-print(4*i1*i2)
+stupid =4*i1*i2 
+
+GeVtoerg = 0.00160218
+
+
+def broken_pl(x, norm, x_b, n1, n2):             #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index               
+    bpl = []
+
+    
+    if x < x_b:
+        frac = (x/x_b)**(2-n1)
+    else:
+        frac = (x/x_b)**(2-n2)
+        bpl.append(norm *frac)
+    
+    return norm * frac
+
+I = integrate.quad(broken_pl, 0.1, 10, args=(1.0e-6, 2.06, 1.42, 2.63))
+print(I[0] * GeVtoerg )
