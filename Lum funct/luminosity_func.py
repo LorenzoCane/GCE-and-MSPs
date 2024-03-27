@@ -4,6 +4,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.integrate as integrate
 from scipy.special import gammaincc,gamma, exp1
 import os
 
@@ -43,22 +44,62 @@ def broken_pl(l, l_b, n1, n2):             #l_b: broken point, n1: 1st part inde
             frac = (l[a]/l_b)**(-n2)
         bpl.append(norm *frac)
     return bpl
-#****************************************************************************
-#BENCHMARKS EVALUATION
+#-------------------------------------------------------
 
-#useful values
-min = 1.0e29       #erg s^(-1)     #min for graph
-max = 1.0e38       #erg s^(-1)     #max for graph
-r = 1.11e-46       #cm^(-2)        #flux/lum ratio
+def GeVtoerg(x):
+    #convertion from GeV to erg
+    return x * 0.00160218
+#-------------------------------------------------------
+def cmtokpc(x):                  
+    #convertion of cm to kpc 
+    return x*3.2407792896664e-22 
+#-------------------------------------------------------
+
+def gNRW2(s, l , b , rs, gamma, rc):    
+    #general Navarro-Frenk-White squared
+    #s: Earth point distance; l, b:  long and lat.; rs:scale radius; gamma: slope; rc:Earth-GC dist.
+    r = np.sqrt(s*s + rc*rc - 2*s*rc*np.cos(l)*np.cos(b))
+    a = (r / rs)**(-2*gamma)
+    b = (1 + r / rs)**(2*(-3+gamma))
+
+    return a * b 
+#-------------------------------------------------------
+
+def sgNRW(s, l , b , rs, gamma, rc):
+    # return s^2 * gNFW function 
+    #ALERT: THE RESULT HAS [s]^2 AS UNIT
+    return (s**2)*gNRW2(s, l , b , rs, gamma, rc)
+#****************************************************************************
+#USEFUL VALUES AND DEF
+
+min = 1.0e29       #erg s^(-1)     #luminosity min 
+max = 1.0e38       #erg s^(-1)     #luminosity max
+b_min = np.deg2rad(2)              #ROI latitude min value
+b_max = np.deg2rad(20)             #ROI latitude max value 
+l_min = 0                          #ROI long. min value
+l_max = b_max                      #ROI long. max value
+rs = 20            #kpc            #scale radius (gNFW) 
+g = 1.2            #kpc            #gamma-sloper (gNFW) 
+rc = 8.5           #kpc            #Earth-GC distance
+
+#integration over ROI
+num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
+den = integrate.nquad(sgNRW, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
+#!!! den is given in kpc^-2 !!!!
+r = cmtokpc(cmtokpc(num / den / 4 /np.pi))       #cm^(-2)        #flux/lum ratio
+print(r)
 #linestyle
+
 ls1 = '--'
 ls2 = 'dotted'
 
 #luminosity and flux 
 l= np.geomspace(min, max,10000)    #luminosity
-f_pl = l * r                       #flux
+f_l = l * r                       #flux
 
-#-----------------------------------------------------------------------------
+#****************************************************************************
+#BENCHMARKS EVALUATION
+
 #wavelet 1 - power law 
 l_m1 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M1 = 1.0e35  #erg s^(-1)   #L_MAX : high flux exp cutoff
@@ -128,7 +169,7 @@ ax1.loglog(l, p_gce, color = 'fuchsia', linestyle = ls1, label = 'GCE')
 ax1.loglog(l, p_aic, color = 'red' , linestyle = ls1 , label = 'AIC')
 ax1.loglog(l, p_disk, color = 'gray' , linestyle = ls2, label = 'Disk')
 ax1.loglog(l, p_nptf, color = 'black', linestyle = ls2,  label = 'NPTF')
-ax2.loglog(f_pl, p_pl1, color = 'lightblue')
+ax2.loglog(f_l, p_pl1, color = 'lightblue')
 
 #graphical config
 ax1.set_yticks(np.geomspace(1.0e-45, 1.e-29, 5))
@@ -159,7 +200,7 @@ ax3.loglog(l, l*p_gce, color = 'fuchsia', linestyle = ls1, label = 'GCE')
 ax3.loglog(l, l*p_aic, color = 'red' , linestyle = ls1 , label = 'AIC')
 ax3.loglog(l, l*p_disk, color = 'gray' , linestyle = ls2, label = 'Disk')
 ax3.loglog(l, l*p_nptf, color = 'black', linestyle = ls2,  label = 'NPTF')
-ax4.loglog(f_pl, l * p_pl1, color = 'lightblue')
+ax4.loglog(f_l, l * p_pl1, color = 'lightblue')
 
 #graphical config
 ax3.set_yticks(np.geomspace(1.0e-7, 1.0e2, 4))
@@ -190,7 +231,7 @@ ax5.loglog(l, l*l*p_gce, color = 'fuchsia', linestyle = ls1, label = 'GCE')
 ax5.loglog(l, l*l*p_aic, color = 'red' , linestyle = ls1 , label = 'AIC')
 ax5.loglog(l, l*l*p_disk, color = 'gray' , linestyle = ls2, label = 'Disk')
 ax5.loglog(l, l*l*p_nptf, color = 'black', linestyle = ls2,  label = 'NPTF')
-ax6.loglog(f_pl, l*l* p_pl1, color = 'lightblue')
+ax6.loglog(f_l, l*l* p_pl1, color = 'lightblue')
 
 #graphical config
 ax5.set_yticks(np.geomspace(1.0e28, 1.0e34, 3))
