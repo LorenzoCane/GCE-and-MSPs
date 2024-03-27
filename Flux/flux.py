@@ -6,66 +6,12 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from iminuit import Minuit
 from iminuit.cost import LeastSquares
+from gce import gNRW2, broken_pl_arr, broken_pl, GeVtoerg
 from jacobi import propagate
 import os
 
 #****************************************************************
 #****************************************************************
-#FUNCTIONS
-
-def broken_pl_arr(x, norm, x_b, n1, n2):               
-    #array broken power law function  (be carefull about exponential renorm)  
-    #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index 
-    bpl = []
-
-    for a in range(0, len(x)):
-        frac = x[a] / x_b
-        if frac < 1:
-            frac = frac**(2-n1)
-        else:
-            frac = frac**(2-n2)
-        bpl.append(norm *frac)
-    
-    return np.array(bpl)
-#-------------------------------------------------------
-
-def broken_pl(x, norm, x_b, n1, n2):                  
-    #broken power law function  (be carefull about exponential renorm)  
-    #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index
-    frac = x / x_b
-    if frac < 1:
-        frac = frac**(2-n1)
-    else:
-        frac = frac**(2-n2)
-        
-    return (norm *frac)
-#-------------------------------------------------------
-
-def GeVtoerg(x):
-    #convertion from GeV to erg
-    return x * 0.00160218
-#-------------------------------------------------------
-def cmtokpc(x):                  
-    #convertion of cm to kpc 
-    return x*3.2407792896664e-22 
-#-------------------------------------------------------
-
-def gNRW2(s, l , b , rs, gamma, rc):    
-    #general Navarro-Frenk-White squared
-    #s: Earth point distance; l, b:  long and lat.; rs:scale radius; gamma: slope; rc:Earth-GC dist.
-    r = np.sqrt(s*s + rc*rc - 2*s*rc*np.cos(l)*np.cos(b))
-    a = (r / rs)**(-2*gamma)
-    b = (1 + r / rs)**(2*(-3+gamma))
-
-    return a * b 
-#-------------------------------------------------------
-
-def sgNRW(s, l , b , rs, gamma, rc):
-    # return s^2 * gNFW function 
-    #ALERT: THE RESULT HAS [s]^2 AS UNIT
-    return (s**2)*gNRW2(s, l , b , rs, gamma, rc)
-
-#****************************************************************************
 #USEFUL VALUES 
 b_min = np.deg2rad(2)              #ROI latitude min value
 b_max = np.deg2rad(20)             #ROI latitude max value 
@@ -103,7 +49,7 @@ d = Data()
 #****************************************************************
 #Fit with a broken power law
 l = LeastSquares(d.emeans, d.flux, d.flux_err, broken_pl_arr) 
-m = Minuit(l, 1.0e-6, 2, 1.42, 2.6, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
+m = Minuit(l, 1.0e-6, 2, 0.6, -0.6, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
 
 m.migrad()
 m.hesse()
