@@ -5,70 +5,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
-from scipy.special import gammaincc,gamma, exp1
+from scipy.special import gammaincc
 import os
+from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr
 
-#****************************************************************************
-#LUMINOSITY FUNCTIONS DEFINITIONS
-
-# array power law func(high flux exp c-o, low flux step c-o)
-def power_law (l, alpha , l_min , l_max, a):   #alpha: slope, l_min = step c-o, l_max: exp c-o               
-    if (a):
-        den =5.84e-28
-    else:
-        den = 6.31e-15
-    num = l**(-alpha) * np.exp(-l/l_max)
-
-    return num / den 
-#-----------------------------------------------------------------------------
-
-# array log normal func
-def log_norm (l, l_0 , sigma):                          
-    num = np.log10(np.e)
-    den = sigma * l * (2*np.pi)**0.5 
-    exp = np.exp(-1.0 * (np.log10(l/l_0))**2 / (2 * sigma * sigma))
-
-    return num * exp / den 
-#-----------------------------------------------------------------------------
-
-# array broken power law lum func
-def broken_pl(l, l_b, n1, n2):             #l_b: broken point, n1: 1st part index, n2: 2nd part index               
-    norm = (1 - n1) * (1 -n2) / l_b / (n1 - n2)
-    frac = 1.0
-    bpl = []
-
-    for a in range(0, len(l)):
-        if l[a] < l_b:
-            frac = (l[a]/l_b)**(-n1)
-        else:
-            frac = (l[a]/l_b)**(-n2)
-        bpl.append(norm *frac)
-    return bpl
-#-------------------------------------------------------
-
-def GeVtoerg(x):
-    #convertion from GeV to erg
-    return x * 0.00160218
-#-------------------------------------------------------
-def cmtokpc(x):                  
-    #convertion of cm to kpc 
-    return x*3.2407792896664e-22 
-#-------------------------------------------------------
-
-def gNRW2(s, l , b , rs, gamma, rc):    
-    #general Navarro-Frenk-White squared
-    #s: Earth point distance; l, b:  long and lat.; rs:scale radius; gamma: slope; rc:Earth-GC dist.
-    r = np.sqrt(s*s + rc*rc - 2*s*rc*np.cos(l)*np.cos(b))
-    a = (r / rs)**(-2*gamma)
-    b = (1 + r / rs)**(2*(-3+gamma))
-
-    return a * b 
-#-------------------------------------------------------
-
-def sgNRW(s, l , b , rs, gamma, rc):
-    # return s^2 * gNFW function 
-    #ALERT: THE RESULT HAS [s]^2 AS UNIT
-    return (s**2)*gNRW2(s, l , b , rs, gamma, rc)
 #****************************************************************************
 #USEFUL VALUES AND DEF
 
@@ -141,18 +81,20 @@ p_aic = log_norm(l, l_0_aic, sigma_aic)  #log norm from bulge obs
 n1_disk = 0.97
 n2_disk = 2.60
 l_b_disk = 1.7e33
+norm_disk = (1-n1_disk)*(1-n2_disk) / l_b_disk / (n1_disk - n2_disk)
 p_disk = []
 
-p_disk = broken_pl(l, l_b_disk, n1_disk, n2_disk)
+p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 
 #-----------------------------------------------------------------------------
 #NPTF - broken power law
 n1_nptf = -0.66
 n2_nptf = 18.2
 l_b_nptf = 2.5e34
+norm_nptf= (1-n1_nptf)*(1-n2_nptf) / l_b_nptf / (n1_nptf - n2_nptf)
 p_nptf = []
 
-p_nptf = broken_pl(l, l_b_nptf, n1_nptf, n2_nptf)
+p_nptf = broken_pl_arr(l, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
 
 #****************************************************************************
 #PLOTS
