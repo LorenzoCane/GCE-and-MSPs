@@ -1,0 +1,4 @@
+luminosity_func.py results
+ 
+F/L = 1.1053981789810835e-46 cm^(-2)
+6.560213941928337e+38

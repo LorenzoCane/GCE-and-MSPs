@@ -63,6 +63,10 @@ def cmtokpc(x):
     #convertion of cm to kpc 
     return x*3.2407792896664e-22 
 #-------------------------------------------------------
+def kpctocm(x):
+    #convertion from kpc to cm
+    return x * 3.0857e21
+#-------------------------------------------------------
 
 def gNRW2(s, l , b , rs, gamma, rc):    
     #general Navarro-Frenk-White squared
@@ -79,3 +83,8 @@ def sgNRW(s, l , b , rs, gamma, rc):
     #ALERT: THE RESULT HAS [s]^2 AS UNIT
     return (s**2)*gNRW2(s, l , b , rs, gamma, rc)
 #****************************************************************************
+#FLUX FUNCTIONS DEF (all sources are considered in the Galactic Center)
+
+def f_powlaw(l, alpha , l_min , l_max, a):
+    s_cm =kpctocm(8.5)
+    return power_law(l, alpha , l_min , l_max, a) * l / 4 / np.pi / s_cm / s_cm

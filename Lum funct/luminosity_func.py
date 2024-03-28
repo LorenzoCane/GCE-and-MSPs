@@ -7,10 +7,13 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.special import gammaincc
 import os
-from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr
+from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, f_powlaw
 
 #****************************************************************************
 #USEFUL VALUES AND DEF
+f = open('lum_func.txt', 'w')      #output file
+f.write('luminosity_func.py results')
+f.write('\n \n')
 
 min = 1.0e29       #erg s^(-1)     #luminosity min 
 max = 1.0e38       #erg s^(-1)     #luminosity max
@@ -21,13 +24,17 @@ l_max = b_max                      #ROI long. max value
 rs = 20            #kpc            #scale radius (gNFW) 
 g = 1.2            #kpc            #gamma-sloper (gNFW) 
 rc = 8.5           #kpc            #Earth-GC distance
+f_obs = 1.8e-9     #erg s^(-1)     #observed flux 
 
 #integration over ROI
 num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
 den = integrate.nquad(sgNRW, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
 #!!! den is given in kpc^-2 !!!!
 r = cmtokpc(cmtokpc(num / den / 4 /np.pi))       #cm^(-2)        #flux/lum ratio
-print(r)
+
+line = ['F/L = ', str(r), ' cm^(-2)']
+for l in line:
+    f.write(l)
 #linestyle
 
 ls1 = '--'
@@ -46,7 +53,11 @@ l_M1 = 1.0e35  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha1 = 1.94  #slope
 
 p_pl1 = power_law(l , alpha1 , l_m1 , l_M1, True) #ming power law lum func
+f_pl1 = integrate.quad(f_powlaw, 1.0e34, np.infty, args=(alpha1, l_m1, l_M1, True))[0]
+NGCE_pl1 = f_obs / f_pl1
 
+f.write('\n')
+f.write(str(NGCE_pl1))
 #-----------------------------------------------------------------------------
 #wavelet 2 - power law 
 l_m2 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
@@ -189,3 +200,5 @@ ax5.set_xlim(min, max)
 ax6.set_xlim(min*r, max*r)
 ax5.legend()
 plt.savefig(os.path.join('2efold.png'))
+
+f.close()
