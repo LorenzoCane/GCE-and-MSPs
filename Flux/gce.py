@@ -59,9 +59,15 @@ def GeVtoerg(x):
     #convertion from GeV to erg
     return x * 0.00160218
 #-------------------------------------------------------
+
 def cmtokpc(x):                  
-    #convertion of cm to kpc 
+    #convertion from cm to kpc 
     return x*3.2407792896664e-22 
+#-------------------------------------------------------
+
+def kpctocm(x):
+    #convertion from kpc to cm
+    return x * 3.0857e21
 #-------------------------------------------------------
 
 def gNRW2(s, l , b , rs, gamma, rc):    

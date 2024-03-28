@@ -13,6 +13,10 @@ import os
 #****************************************************************
 #****************************************************************
 #USEFUL VALUES 
+f = open('flux.txt', 'w')
+lines =['flux.py results', '\n', '\n']
+f.writelines(lines)
+
 b_min = np.deg2rad(2)              #ROI latitude min value
 b_max = np.deg2rad(20)             #ROI latitude max value 
 l_min = 0                          #ROI long. min value
@@ -49,21 +53,26 @@ d = Data()
 #****************************************************************
 #Fit with a broken power law
 l = LeastSquares(d.emeans, d.flux, d.flux_err, broken_pl_arr) 
-m = Minuit(l, 1.0e-6, 2, 0.6, -0.6, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
+m = Minuit(l, 1.0e-6, 2, -0.6, 0.6, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
 
 m.migrad()
 m.hesse()
-#print(repr(m.params))
 
+f.write('Fit parameters:'), f.write('\n')
+for key, value, error in zip(m.parameters, m.values, m.errors):
+    line = [str(key), ' = ', str(value), ' +- ', str(error), '\n']
+    for i in line: f.write(i)
 
 #y, ycov = propagate(lambda norm, xb, n1, n2: broken_pl(d.emeans, norm, xb, n1, n2)[1], m.values, m.covariance)
 #****************************************************************
 #Calculation of the total flux
 I = integrate.quad(broken_pl, 0.1, 10, args=tuple(m.values))
 
-print("Flux (in sr units): \nF_Omega =" , I[0], " [GeV/cm^2/s/sr] = ", GeVtoerg(I[0]) , "[erg/cm^2/s/sr]")
-print("Flux: \nF =" , I[0]*ang_norm, " [GeV/cm^2/s] = ", GeVtoerg(I[0])*ang_norm , "[erg/cm^2/s]")
-
+f.write('\n')
+fluxres1 =["Flux (in sr units): \nF_Omega =" , str(I[0]), " [GeV/cm^2/s/sr] = ", str(GeVtoerg(I[0])) , "[erg/cm^2/s/sr]", '\n']
+fluxres2 =["Flux: \nF =" , str(I[0]*ang_norm) , " [GeV/cm^2/s] = ", str(GeVtoerg(I[0])*ang_norm) , "[erg/cm^2/s]"]
+for i in fluxres1: f.write(i)
+for i in fluxres2: f.write(i)
 
 #****************************************************************
 #PLOTS
