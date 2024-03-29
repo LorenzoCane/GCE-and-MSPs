@@ -25,11 +25,11 @@ rs = 20            #kpc            #scale radius (gNFW)
 g = 1.2            #kpc            #gamma-sloper (gNFW) 
 rc = 8.5           #kpc            #Earth-GC distance
 
-#integration over ROI
-num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
+# integration over ROI
+num = integrate.nquad(gNRW2, [ [l_min, l_max], [b_min, b_max], [1.0e-6 , np.infty],] , args=(rs, g, rc))[-1]
 i1 = integrate.quad(np.cos, l_min , l_max)[0]
 i2 = integrate.quad(np.cos, b_min , b_max)[0]
-ang_norm =4*i1*i2 
+ang_norm =4*i1*i2
 #****************************************************************
 #Import data of Calore et al. 2015
 
@@ -53,16 +53,17 @@ d = Data()
 #****************************************************************
 #Fit with a broken power law
 l = LeastSquares(d.emeans, d.flux, d.flux_err, broken_pl_arr) 
-m = Minuit(l, 1.0e-6, 2, -0.6, 0.6, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
+m = Minuit(l, 1.0e-6, 2.06, -0.58, 0.63, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
 
 m.migrad()
 m.hesse()
 
+m.values[2], m.values[3] = m.values[2]+2 , m.values[3]+2  #to be better compared with Dinsmore values
 f.write('Fit parameters:'), f.write('\n')
 for key, value, error in zip(m.parameters, m.values, m.errors):
     line = [str(key), ' = ', str(value), ' +- ', str(error), '\n']
     for i in line: f.write(i)
-
+m.values[2], m.values[3] = m.values[2]-2 , m.values[3]-2  #go back to fit values
 #y, ycov = propagate(lambda norm, xb, n1, n2: broken_pl(d.emeans, norm, xb, n1, n2)[1], m.values, m.covariance)
 #****************************************************************
 #Calculation of the total flux

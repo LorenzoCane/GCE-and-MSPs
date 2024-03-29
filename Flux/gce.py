@@ -70,7 +70,7 @@ def kpctocm(x):
     return x * 3.0857e21
 #-------------------------------------------------------
 
-def gNRW2(s, l , b , rs, gamma, rc):    
+def gNRW2(l, b , s, rs, gamma, rc):    
     #general Navarro-Frenk-White squared
     #s: Earth point distance; l, b:  long and lat.; rs:scale radius; gamma: slope; rc:Earth-GC dist.
     r = np.sqrt(s*s + rc*rc - 2*s*rc*np.cos(l)*np.cos(b))
