@@ -86,5 +86,9 @@ def sgNRW(s, l , b , rs, gamma, rc):
 #FLUX FUNCTIONS DEF (all sources are considered in the Galactic Center)
 
 def l_log(l, l_0 , sigma):
-    #
-    return log_norm (l, l_0 , sigma)* l
+    num = np.log10(np.e)
+    den = sigma * l * (2*np.pi)**0.5 
+    exp = np.exp(-1.0 * (np.log10(l/l_0))**2 / (2 * sigma * sigma))
+
+    return l*  num * exp / den  #
+    

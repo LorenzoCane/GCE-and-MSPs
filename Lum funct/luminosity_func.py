@@ -27,8 +27,8 @@ rc = 8.5           #kpc            #Earth-GC distance
 f_obs = 1.8e-9     #erg s^(-1)     #observed flux 
 
 #integration over ROI
-num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
-den = integrate.nquad(sgNRW, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
+num = 4*integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
+den = 4* integrate.nquad(sgNRW, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[0]
 #!!! den is given in kpc^-2 !!!!
 r = cmtokpc(cmtokpc(num / den / 4 /np.pi))       #cm^(-2)        #flux/lum ratio
 
@@ -68,10 +68,11 @@ l_0_glc = 8.8e33
 sigma_glc = 0.62 
 
 p_glc = log_norm(l, l_0_glc, sigma_glc)  #log norm from global cluster obs
-den = num * integrate.quad(l_log, 10e34, 1.0e50, args=(l_0_glc, sigma_glc))[0]
+d = integrate.quad(l_log, 1.0e34, 1.0e38, args=(l_0_glc, sigma_glc))[0]
+n = integrate.quad(log_norm, 1.0e34, 1.0e38, args=(l_0_glc, sigma_glc))[0]
 #I = integrate.quad(log)
 f.write('\n')
-f.write(str(f_obs/ den / 4 /np.pi))
+f.write(str(f_obs / r / d *n))
 #-----------------------------------------------------------------------------
 #GCE - log normal
 l_0_gce = 1.3e32
