@@ -90,5 +90,8 @@ def l_log(l, l_0 , sigma):
     den = sigma * l * (2*np.pi)**0.5 
     exp = np.exp(-1.0 * (np.log10(l/l_0))**2 / (2 * sigma * sigma))
 
-    return l*  num * exp / den  #
-    
+    return l*  num * exp / den 
+#-------------------------------------------------------
+
+def l_bpl(x, norm, x_b, n1, n2):  
+    return x * broken_pl(x, norm, x_b, n1, n2)

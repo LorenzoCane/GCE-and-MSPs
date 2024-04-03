@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.special import gammaincc
 import os
-from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, l_log
+from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl
 
 #****************************************************************************
 #USEFUL VALUES AND DEF
@@ -68,11 +68,22 @@ l_0_glc = 8.8e33
 sigma_glc = 0.62 
 
 p_glc = log_norm(l, l_0_glc, sigma_glc)  #log norm from global cluster obs
-d = integrate.quad(l_log, 1.0e34, 1.0e38, args=(l_0_glc, sigma_glc))[0]
+
+d = integrate.quad(l_log, 1.0e29, 1.0e38, args=(l_0_glc, sigma_glc))[0]
 n = integrate.quad(log_norm, 1.0e34, 1.0e38, args=(l_0_glc, sigma_glc))[0]
-#I = integrate.quad(log)
+
 f.write('\n')
-f.write(str(f_obs / r / d *n))
+f.write('A = ')
+f.write(str(f_obs / r / d /den))
+f.write('\n')
+f.write('N_GCE = ')
+f.write(str(f_obs / r / d))
+f.write('\n')
+f.write('N_r = ')
+f.write(str(f_obs / r / d*n))
+
+f.write('\n')
+
 #-----------------------------------------------------------------------------
 #GCE - log normal
 l_0_gce = 1.3e32
@@ -80,12 +91,42 @@ sigma_gce = 0.70
 
 p_gce = log_norm(l, l_0_gce, sigma_gce)  #log norm from bulge obs
 
+d = integrate.quad(l_log, 1.0e29, 1.0e38, args=(l_0_gce, sigma_gce))[0]
+n = integrate.quad(log_norm, 1.0e34, 1.0e38, args=(l_0_gce, sigma_gce))[0]
+
+f.write('\n')
+f.write('\n')
+f.write('\n')
+
+
+f.write('A = ')
+f.write(str(f_obs / r / d /den))
+f.write('\n')
+f.write('N_GCE = ')
+f.write(str(f_obs / r / d))
+f.write('\n')
+f.write('N_r = ')
+f.write(str(f_obs / r / d*n))
+
 #-----------------------------------------------------------------------------
 #AIC - log normal
 l_0_aic = 4.3e30
 sigma_aic = 0.94
 
 p_aic = log_norm(l, l_0_aic, sigma_aic)  #log norm from bulge obs
+
+d = integrate.quad(l_log, 1.0e29, 1.0e38, args=(l_0_aic, sigma_aic))[0]
+n = integrate.quad(log_norm, 1.0e34, 1.0e38, args=(l_0_aic, sigma_aic))[0]
+
+f.write('\n')
+f.write('A = ')
+f.write(str(f_obs / r / d /den))
+f.write('\n')
+f.write('N_GCE = ')
+f.write(str(f_obs / r / d))
+f.write('\n')
+f.write('N_r = ')
+f.write(str(f_obs / r / d*n))
 
 #-----------------------------------------------------------------------------
 #Disk - broken power law
@@ -97,6 +138,19 @@ p_disk = []
 
 p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 
+d = integrate.quad(l_bpl, 1.0e29, 1.0e37, args=(norm_disk, l_b_disk, n1_disk, n2_disk))[0]
+n = integrate.quad(broken_pl, 1.0e34, 1.0e37, args=(norm_disk, l_b_disk, n1_disk, n2_disk))[0]
+
+f.write('\n')
+f.write('A = ')
+f.write(str(f_obs / r / d /den))
+f.write('\n')
+f.write('N_GCE = ')
+f.write(str(f_obs / r / d))
+f.write('\n')
+f.write('N_r = ')
+f.write(str(f_obs / r / d*n))
+
 #-----------------------------------------------------------------------------
 #NPTF - broken power law
 n1_nptf = -0.66
@@ -106,6 +160,19 @@ norm_nptf= (1-n1_nptf)*(1-n2_nptf) / l_b_nptf / (n1_nptf - n2_nptf)
 p_nptf = []
 
 p_nptf = broken_pl_arr(l, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
+
+d = integrate.quad(l_bpl, 1.0e29, 1.0e37, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf))[0]
+n = integrate.quad(broken_pl, 1.0e34, 1.0e37, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf))[0]
+
+f.write('\n')
+f.write('A = ')
+f.write(str(f_obs / r / d /den))
+f.write('\n')
+f.write('N_GCE = ')
+f.write(str(f_obs / r / d))
+f.write('\n')
+f.write('N_r = ')
+f.write(str(f_obs / r / d*n))
 
 #****************************************************************************
 #PLOTS
