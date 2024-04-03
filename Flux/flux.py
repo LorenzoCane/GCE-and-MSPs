@@ -14,7 +14,7 @@ import os
 #****************************************************************
 #USEFUL VALUES 
 f = open('flux.txt', 'w')
-lines =['flux.py results', '\n', '\n']
+lines =['flux.py results', '\n************************************************* \n \n']
 f.writelines(lines)
 
 b_min = np.deg2rad(2)              #ROI latitude min value
@@ -69,7 +69,7 @@ for key, value, error in zip(m.parameters, m.values, m.errors):
 #Calculation of the total flux
 I = integrate.quad(broken_pl, 0.1, 10, args=tuple(m.values))
 
-f.write('\n')
+f.write('--------------------------------------------------------\n\n')
 fluxres1 =["Flux (in sr units): \nF_Omega =" , str(I[0]), " [GeV/cm^2/s/sr] = ", str(GeVtoerg(I[0])) , "[erg/cm^2/s/sr]", '\n']
 fluxres2 =["Flux: \nF =" , str(I[0]*ang_norm) , " [GeV/cm^2/s] = ", str(GeVtoerg(I[0])*ang_norm) , "[erg/cm^2/s]"]
 for i in fluxres1: f.write(i)
