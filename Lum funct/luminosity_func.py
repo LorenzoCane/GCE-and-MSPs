@@ -12,8 +12,8 @@ from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, broke
 #****************************************************************************
 #USEFUL VALUES AND DEF
 f = open('lum_func.txt', 'w')      #output file
-f.write('luminosity_func.py results')
-f.write('\n \n')
+f.write('luminosity_func.py results \n')
+f.write('************************************************* \n \n')
 
 min = 1.0e29       #erg s^(-1)     #luminosity min 
 max = 1.0e38       #erg s^(-1)     #luminosity max
@@ -32,9 +32,12 @@ den = 4* integrate.nquad(sgNRW, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_
 #!!! den is given in kpc^-2 !!!!
 r = cmtokpc(cmtokpc(num / den / 4 /np.pi))       #cm^(-2)        #flux/lum ratio
 
-line = ['F/L = ', str(r), ' cm^(-2)']
+line = ['Flux/Lum ratio: ', '\n','F/L = ', str(r), ' cm^(-2) \n']
 for l in line:
     f.write(l)
+
+f.write('-------------------------------------------------- \n \n')
+
 #linestyle
 
 ls1 = '--'
@@ -46,13 +49,25 @@ f_l = l * r                       #flux
 
 #****************************************************************************
 #BENCHMARKS EVALUATION
-
+f.write('Number of total PSs and number of resolved PSs: \n')
 #wavelet 1 - power law 
 l_m1 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M1 = 1.0e35  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha1 = 1.94  #slope
 
-p_pl1 = power_law(l , alpha1 , l_m1 , l_M1, True) #ming power law lum fung
+p_pl1 = power_law(l , alpha1 , l_m1 , l_M1, True) #ming power law lum func
+
+d = integrate.quad(power_law, 1.0e29, 1.0e38, args=(alpha1-1 , l_m1 , l_M1, True))[0]
+n = integrate.quad(power_law, 1.0e34, 1.0e38, args=(alpha1 , l_m1 , l_M1, True))[0]
+
+f.write('\nWavelet 1: \n')
+f.write('N_GCE = ')
+f.write(str(f_obs / r / d))
+f.write('\n')
+f.write('N_r = ')
+f.write(str(f_obs / r / d*n))
+
+f.write('\n')
 
 #----------------------------------------------------------------------------g
 #wavelet 2 - power law 
@@ -60,7 +75,19 @@ l_m2 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M2 = 7.0e34  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha2 = 1.5  #slope
 
-p_pl2 = power_law(l, alpha2, l_m2, l_M2, False) #bartles power law lum funcs
+p_pl2 = power_law(l, alpha2, l_m2, l_M2, False) #bartles power law lum func
+
+d = integrate.quad(power_law, 1.0e29, 1.0e38, args=(alpha2-1 , l_m2 , l_M2, False))[0]
+n = integrate.quad(power_law, 1.0e34, 1.0e38, args=(alpha2 , l_m2 , l_M2, False))[0]
+
+f.write('\n\nWavelet 2: \n')
+f.write('N_GCE = ')
+f.write(str(f_obs / r / d))
+f.write('\n')
+f.write('N_r = ')
+f.write(str(f_obs / r / d*n))
+
+
 
 #-----------------------------------------------------------------------------
 #GLC - log normal
@@ -72,17 +99,12 @@ p_glc = log_norm(l, l_0_glc, sigma_glc)  #log norm from global cluster obs
 d = integrate.quad(l_log, 1.0e29, 1.0e38, args=(l_0_glc, sigma_glc))[0]
 n = integrate.quad(log_norm, 1.0e34, 1.0e38, args=(l_0_glc, sigma_glc))[0]
 
-f.write('\n')
-f.write('A = ')
-f.write(str(f_obs / r / d /den))
-f.write('\n')
+f.write('\n\nGLC: \n')
 f.write('N_GCE = ')
 f.write(str(f_obs / r / d))
 f.write('\n')
 f.write('N_r = ')
 f.write(str(f_obs / r / d*n))
-
-f.write('\n')
 
 #-----------------------------------------------------------------------------
 #GCE - log normal
@@ -94,14 +116,7 @@ p_gce = log_norm(l, l_0_gce, sigma_gce)  #log norm from bulge obs
 d = integrate.quad(l_log, 1.0e29, 1.0e38, args=(l_0_gce, sigma_gce))[0]
 n = integrate.quad(log_norm, 1.0e34, 1.0e38, args=(l_0_gce, sigma_gce))[0]
 
-f.write('\n')
-f.write('\n')
-f.write('\n')
-
-
-f.write('A = ')
-f.write(str(f_obs / r / d /den))
-f.write('\n')
+f.write('\n\nGCE: \n')
 f.write('N_GCE = ')
 f.write(str(f_obs / r / d))
 f.write('\n')
@@ -118,10 +133,7 @@ p_aic = log_norm(l, l_0_aic, sigma_aic)  #log norm from bulge obs
 d = integrate.quad(l_log, 1.0e29, 1.0e38, args=(l_0_aic, sigma_aic))[0]
 n = integrate.quad(log_norm, 1.0e34, 1.0e38, args=(l_0_aic, sigma_aic))[0]
 
-f.write('\n')
-f.write('A = ')
-f.write(str(f_obs / r / d /den))
-f.write('\n')
+f.write('\n\nAIC: \n')
 f.write('N_GCE = ')
 f.write(str(f_obs / r / d))
 f.write('\n')
@@ -141,10 +153,7 @@ p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 d = integrate.quad(l_bpl, 1.0e29, 1.0e37, args=(norm_disk, l_b_disk, n1_disk, n2_disk))[0]
 n = integrate.quad(broken_pl, 1.0e34, 1.0e37, args=(norm_disk, l_b_disk, n1_disk, n2_disk))[0]
 
-f.write('\n')
-f.write('A = ')
-f.write(str(f_obs / r / d /den))
-f.write('\n')
+f.write('\n\nDisk: \n')
 f.write('N_GCE = ')
 f.write(str(f_obs / r / d))
 f.write('\n')
@@ -164,10 +173,7 @@ p_nptf = broken_pl_arr(l, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
 d = integrate.quad(l_bpl, 1.0e29, 1.0e37, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf))[0]
 n = integrate.quad(broken_pl, 1.0e34, 1.0e37, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf))[0]
 
-f.write('\n')
-f.write('A = ')
-f.write(str(f_obs / r / d /den))
-f.write('\n')
+f.write('\n\nNPTF: \n')
 f.write('N_GCE = ')
 f.write(str(f_obs / r / d))
 f.write('\n')
@@ -177,7 +183,7 @@ f.write(str(f_obs / r / d*n))
 #****************************************************************************
 #PLOTS
 
-#power laws plot
+#lum func plot
 
 fig, ax1 = plt.subplots()
 ax2 = ax1.twiny()
