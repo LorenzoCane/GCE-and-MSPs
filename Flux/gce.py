@@ -35,9 +35,9 @@ def broken_pl_arr(x, norm, x_b, n1, n2):
     for a in range(0, len(x)):
         frac = x[a] / x_b
         if frac < 1:
-            frac = frac**(-n1)
+            frac = frac**(2-n1)
         else:
-            frac = frac**(-n2)
+            frac = frac**(2-n2)
         bpl.append(norm *frac)
     
     return np.array(bpl)
@@ -48,9 +48,9 @@ def broken_pl(x, norm, x_b, n1, n2):
     #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index
     frac = x / x_b
     if frac < 1:
-        frac = frac**(-n1)
+        frac = frac**(2-n1)
     else:
-        frac = frac**(-n2)
+        frac = frac**(2-n2)
         
     return (norm *frac)
 #-------------------------------------------------------
@@ -70,7 +70,7 @@ def kpctocm(x):
     return x * 3.0857e21
 #-------------------------------------------------------
 
-def gNRW2(l, b , s, rs, gamma, rc):    
+def gNRW2(s, l, b, rs, gamma, rc):    
     #general Navarro-Frenk-White squared
     #s: Earth point distance; l, b:  long and lat.; rs:scale radius; gamma: slope; rc:Earth-GC dist.
     r = np.sqrt(s*s + rc*rc - 2*s*rc*np.cos(l)*np.cos(b))
