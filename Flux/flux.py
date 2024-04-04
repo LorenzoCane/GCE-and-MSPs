@@ -26,10 +26,10 @@ g = 1.2            #kpc            #gamma-sloper (gNFW)
 rc = 8.5           #kpc            #Earth-GC distance
 
 # integration over ROI
-num = 4*integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[-1]
+num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[-1]
 i1 = integrate.quad(np.cos, l_min , l_max)[0]
 i2 = integrate.quad(np.cos, b_min , b_max)[0]
-ang_norm = 4* i1 * i2
+ang_norm = 2*(l_max-l_min)*(b_max-b_min)
 #****************************************************************
 #Import data of Calore et al. 2015
 
