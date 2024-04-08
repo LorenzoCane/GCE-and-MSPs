@@ -27,9 +27,8 @@ rc = 8.5           #kpc            #Earth-GC distance
 
 # integration over ROI
 num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[-1]
-i1 = integrate.quad(np.cos, l_min , l_max)[0]
-i2 = integrate.quad(np.cos, b_min , b_max)[0]
-ang_norm = 2*(l_max-l_min)*(b_max-b_min)
+
+ang_norm = 2*(l_max-l_min)*(np.sin(b_max)-np.sin(b_min))
 #****************************************************************
 #Import data of Calore et al. 2015
 
@@ -52,7 +51,7 @@ d = Data()
 
 #****************************************************************
 #Fit with a broken power law
-l = LeastSquares(d.emeans, d.flux, d.flux_err, broken_pl_arr) 
+l = LeastSquares(d.emeans, d.flux, d.full_sigma, broken_pl_arr) 
 m = Minuit(l, 1.0e-6, 2.06, 1.42, 2.63, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
 
 m.migrad()
