@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.special import gammaincc
 import os
-from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl
+from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl, n_integrand
 
 #****************************************************************************
 #USEFUL VALUES AND DEF
@@ -145,13 +145,20 @@ f.write(str(f_obs / r / d*n))
 n1_disk = 0.97
 n2_disk = 2.60
 l_b_disk = 1.7e33
+l_m_disk = 1.0e30
+l_M_disk = 1.0e37
+a = (n1_disk - n2_disk) - (1-n2_disk)*(l_m_disk/l_b_disk)**(1-n1_disk)+ (1-n1_disk)*(l_M_disk/l_b_disk)**(1-n2_disk)
 norm_disk = (1-n1_disk)*(1-n2_disk) / l_b_disk / (n1_disk - n2_disk)
 p_disk = []
 
 p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 
-d = integrate.quad(l_bpl, 1.0e29, 1.0e37, args=(norm_disk, l_b_disk, n1_disk, n2_disk))[0]
-n = integrate.quad(broken_pl, 1.0e34, 1.0e37, args=(norm_disk, l_b_disk, n1_disk, n2_disk))[0]
+int_max = 37
+norm_disk_lim = (1-n1_disk)*(1-n2_disk) / l_b_disk / a
+
+
+d = integrate.quad(l_bpl, 30, int_max, args=(norm_disk_lim, np.log10(l_b_disk), n1_disk, n2_disk))[0]
+n = integrate.quad(n_integrand, 34, int_max, args=(norm_disk_lim, np.log10(l_b_disk), n1_disk, n2_disk))[0]
 
 f.write('\n\nDisk: \n')
 f.write('N_GCE = ')
@@ -170,8 +177,15 @@ p_nptf = []
 
 p_nptf = broken_pl_arr(l, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
 
-d = integrate.quad(l_bpl, 1.0e29, 1.0e37, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf))[0]
-n = integrate.quad(broken_pl, 1.0e34, 1.0e37, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf))[0]
+int_max = 1.0e34
+contr = 1
+while contr > 1.0e-50:
+    int_max *= 2
+    contr = broken_pl(int_max, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
+
+print(int_max, "   ", contr)
+d = integrate.quad(l_bpl, 1.0e29, int_max, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf))[0]
+n = integrate.quad(broken_pl, 1.0e34, int_max, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf))[0]
 
 f.write('\n\nNPTF: \n')
 f.write('N_GCE = ')
