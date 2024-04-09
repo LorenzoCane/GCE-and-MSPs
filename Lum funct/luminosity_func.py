@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.special import gammaincc
 import os
-from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl, n_integrand
+from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl #, n_integrand
 
 #****************************************************************************
 #USEFUL VALUES AND DEF
@@ -153,12 +153,12 @@ p_disk = []
 
 p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 
-int_max = 37
+
 norm_disk_lim = (1-n1_disk)*(1-n2_disk) / l_b_disk / a
 
 
-d = integrate.quad(l_bpl, 30, int_max, args=(norm_disk_lim, np.log10(l_b_disk), n1_disk, n2_disk))[0]
-n = integrate.quad(n_integrand, 34, int_max, args=(norm_disk_lim, np.log10(l_b_disk), n1_disk, n2_disk))[0]
+d = integrate.quad(l_bpl, l_m_disk, l_M_disk, args=(norm_disk_lim, l_b_disk, n1_disk, n2_disk))[0]
+n = integrate.quad(broken_pl, 1.0e34, l_M_disk, args=(norm_disk_lim, l_b_disk, n1_disk, n2_disk))[0]
 
 f.write('\n\nDisk: \n')
 f.write('N_GCE = ')

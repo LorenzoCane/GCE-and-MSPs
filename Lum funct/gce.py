@@ -94,7 +94,7 @@ def l_log(l, l_0 , sigma):
 #-------------------------------------------------------
 
 def l_bpl(x, norm, x_b, n1, n2):  
-    return np.log10(x) * broken_pl(np.log10(x), norm, x_b, n1, n2) * x
+    return broken_pl(x, norm, x_b, n1, n2) * x
 
-def n_integrand(x, norm, x_b, n1, n2):
-    return x * broken_pl(np.log10(x), norm, x_b, n1, n2)
+#def n_integrand(x, norm, x_b, n1, n2):
+#    return x * broken_pl(np.log10(x), norm, np.log10(x_b), n1, n2)
