@@ -27,7 +27,7 @@ rc = 8.5           #kpc            #Earth-GC distance
 
 # integration over ROI
 num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[-1]
-i1 = integrate.quad(np.cos, b_min, b_max)[0]
+i1 = integrate.quad(np.sin, b_min, b_max)[0]
 i2 = integrate.quad(np.cos, l_min, l_max)[0]
 ang_norm = 2*i2*(b_max-b_min)
 #****************************************************************
