@@ -25,7 +25,7 @@ l_th = 1.0e34      #erg s^(-1)     # luminosity threshold
 #integration conditions
 abs_err = 0.0
 rel_err = 1.0e-6
-div_numb = 50
+div_numb = 100
 #ROI bounds
 b_min = np.deg2rad(2)              #ROI latitude min value
 b_max = np.deg2rad(20)             #ROI latitude max value 
@@ -39,11 +39,11 @@ rc = 8.5           #kpc            #Earth-GC distance
 f_obs = 1.8e-9     #erg s^(-1)     #observed flux 
 
 #Flux/Lum ratio
-options = {'epsabs': abs_err, 'epsrel' : rel_err}
+options = {'epsabs': abs_err, 'epsrel' : rel_err, 'limit' : div_numb}
 num = 4*integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc), opts=options)
 den = 4* integrate.nquad(sgNRW, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc), opts = options)
-print(den[0], "  ", den[1])
-print(num[0], "  ", num[1])
+#print(den[0], "  ", den[1])
+#print(num[0], "  ", num[1])
 #!!! den is given in kpc^-2 !!!!
 r = cmtokpc(cmtokpc(num[0] / den[0] / 4 /np.pi))       #cm^(-2)        #flux/lum ratio
 
@@ -314,7 +314,7 @@ ax6.set_xlim(min*r, max*r)
 ax5.legend()
 plt.savefig(os.path.join('2efold.png'))
 
-end_time = time.monotonic()
+#----------------------------------------------------------------------------
 f.close()
-
+end_time = time.monotonic()
 print(timedelta(seconds= end_time - start_time))
