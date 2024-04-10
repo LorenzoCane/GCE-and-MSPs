@@ -1,6 +1,7 @@
 
 #import
-
+import time 
+from datetime import timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
@@ -13,23 +14,33 @@ import os
 #****************************************************************
 #****************************************************************
 #USEFUL VALUES 
+start_time = time.monotonic()
+
 f = open('flux.txt', 'w')
 lines =['flux.py results', '\n************************************************* \n \n']
 f.writelines(lines)
-
+#integration conditions
+abs_err = 0.0
+rel_err = 1.0e-4
+div_numb = 100
+#ROI bounds
 b_min = np.deg2rad(2)              #ROI latitude min value
 b_max = np.deg2rad(20)             #ROI latitude max value 
 l_min = 0                          #ROI long. min value
 l_max = b_max                      #ROI long. max value
+#astronomical constants
 rs = 20            #kpc            #scale radius (gNFW) 
 g = 1.2            #kpc            #gamma-sloper (gNFW) 
 rc = 8.5           #kpc            #Earth-GC distance
-
-# integration over ROI
-num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc))[-1]
-i1 = integrate.quad(np.sin, b_min, b_max)[0]
-i2 = integrate.quad(np.cos, l_min, l_max)[0]
-ang_norm = 2*i2*(b_max-b_min)
+#solid angle integration
+options = {'epsabs': abs_err, 'epsrel' : rel_err, 'limit' : div_numb}
+#num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc), opts=options)
+i1 = integrate.quad(np.sin, b_min, b_max, epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+i2 = integrate.quad(np.cos, l_min, l_max, epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+ang_norm = 2*i2[0]*(b_max-b_min)
+#energy integratio bound
+e_min = 0.1  #GeV
+e_max = 10   #GeV
 #****************************************************************
 #Import data of Calore et al. 2015
 
@@ -67,8 +78,8 @@ for key, value, error in zip(m.parameters, m.values, m.errors):
 #y, ycov = propagate(lambda norm, xb, n1, n2: broken_pl(d.emeans, norm, xb, n1, n2)[1], m.values, m.covariance)
 #****************************************************************
 #Calculation of the total flux
-I = integrate.quad(broken_pl, 0.1, 10, args=tuple(m.values))
-
+I = integrate.quad(broken_pl, e_min, e_max, args=tuple(m.values), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+print(I[0], "  ", I[1])
 f.write('--------------------------------------------------------\n\n')
 fluxres1 =["Flux (in sr units): \nF_Omega =" , str(I[0]), " [GeV/cm^2/s/sr] = ", str(GeVtoerg(I[0])) , "[erg/cm^2/s/sr]", '\n']
 fluxres2 =["Flux: \nF =" , str(I[0]*ang_norm) , " [GeV/cm^2/s] = ", str(GeVtoerg(I[0])*ang_norm) , "[erg/cm^2/s]"]
@@ -123,3 +134,8 @@ plt.plot(en, np.multiply(flux_fit, ang_norm), color = "red", ls='-.', label = 'B
 plt.legend()
 
 plt.savefig(os.path.join('flux.png'))
+
+#----------------------------------------------------------------------------
+f.close()
+end_time = time.monotonic()
+print(timedelta(seconds= end_time - start_time))
