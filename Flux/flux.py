@@ -21,7 +21,7 @@ lines =['flux.py results', '\n************************************************* 
 f.writelines(lines)
 #integration conditions
 abs_err = 0.0
-rel_err = 1.0e-4
+rel_err = 1.0e-6
 div_numb = 100
 #ROI bounds
 b_min = np.deg2rad(2)              #ROI latitude min value
