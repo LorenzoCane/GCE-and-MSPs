@@ -11,7 +11,7 @@ import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
 from gce import gNRW2, sgNRW, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl
-from tools import cmtokpc, log_scale_int
+from tools import cmtokpc, log_scale_int, mygamma_inc
 
 #****************************************************************************
 #USEFUL VALUES AND DEF
@@ -29,6 +29,7 @@ l_th = 1.0e34      #erg s^(-1)     # luminosity threshold
 abs_err = 0.0
 rel_err = 1.0e-8
 div_numb = 1000
+inf_approx = 1.0e50
 #ROI bounds
 b_min = np.deg2rad(2)              #ROI latitude min value
 b_max = np.deg2rad(20)             #ROI latitude max value 
@@ -72,11 +73,12 @@ f.write('Number of total PSs and number of resolved PSs: \n')
 l_m1 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M1 = 1.0e35  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha1 = 1.94  #slope
+norm1 = 1/mygamma_inc(1-alpha1, l_m1/l_M1, inf_approx, abs_err, rel_err, div_numb) / l_M1**(1-alpha1)
 
-p_pl1 = power_law(l , alpha1 , l_m1 , l_M1, True) #ming power law lum func
+p_pl1 = power_law(l , alpha1, l_M1, norm1) #ming power law lum func
 
-d = integrate.quad(power_law, min, max, args=(alpha1-1 , l_m1 , l_M1, True), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
-n = integrate.quad(power_law, l_th, max, args=(alpha1 , l_m1 , l_M1, True), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+d = integrate.quad(power_law, min, max, args=(alpha1-1, l_M1, norm1), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+n = integrate.quad(power_law, l_th, max, args=(alpha1, l_M1, norm1), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 #print(d[0], "  ", d[1])
 f.write('\nWavelet 1: \n')
 f.write('N_GCE = ')
@@ -92,11 +94,13 @@ f.write('\n')
 l_m2 = 1.0e29  #erg s^(-1)  #L_min : low flux step-func cutoff
 l_M2 = 7.0e34  #erg s^(-1)   #L_MAX : high flux exp cutoff
 alpha2 = 1.5  #slope
+norm2 = 1 / mygamma_inc(1-alpha2, l_m2/l_M2, inf_approx, abs_err, rel_err, div_numb) / l_M2**(1-alpha2)
 
-p_pl2 = power_law(l, alpha2, l_m2, l_M2, False) #bartles power law lum func
 
-d = integrate.quad(power_law, min, max, args=(alpha2-1 , l_m2 , l_M2, False), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
-n = integrate.quad(power_law, l_th, max, args=(alpha2 , l_m2 , l_M2, False), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+p_pl2 = power_law(l, alpha2, l_M2, norm2) #bartles power law lum func
+
+d = integrate.quad(power_law, min, max, args=(alpha2-1, l_M2, norm2), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+n = integrate.quad(power_law, l_th, max, args=(alpha2, l_M2, norm2), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 #print(d[0], "  ", d[1])
 
 f.write('\n\nWavelet 2: \n')
