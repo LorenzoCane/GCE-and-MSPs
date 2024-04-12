@@ -6,9 +6,12 @@ from datetime import timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
-from scipy.special import gammaincc
+#from scipy.special import gammaincc
 import os
-from gce import gNRW2, sgNRW, cmtokpc, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl #, n_integrand
+import sys
+sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
+from gce import gNRW2, sgNRW, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl
+from tools import cmtokpc, log_scale_int
 
 #****************************************************************************
 #USEFUL VALUES AND DEF
@@ -24,8 +27,8 @@ max = 1.0e38       #erg s^(-1)     #luminosity max
 l_th = 1.0e34      #erg s^(-1)     # luminosity threshold
 #integration conditions
 abs_err = 0.0
-rel_err = 1.0e-6
-div_numb = 100
+rel_err = 1.0e-8
+div_numb = 1000
 #ROI bounds
 b_min = np.deg2rad(2)              #ROI latitude min value
 b_max = np.deg2rad(20)             #ROI latitude max value 
@@ -179,10 +182,12 @@ p_nptf = broken_pl_arr(l, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
 #print(int_max, "   ", contr)
 
 int_max =3.2e35 #int upper bound as found before
-
-d = integrate.quad(l_bpl, min, int_max, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
-n = integrate.quad(broken_pl, l_th, int_max, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
-#print(n[0], "  ", n[1])
+arg=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
+d = log_scale_int(l_bpl, min, int_max, 1.0e50, arg, abs_err, rel_err, div_numb)
+n = log_scale_int(broken_pl, l_th, int_max, 1.0e50, arg, abs_err, rel_err, div_numb)
+#d = integrate.quad(l_bpl, min, int_max, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+#n = integrate.quad(broken_pl, l_th, int_max, args=arg, epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+#print(d[0], "  ", d[1])
 
 f.write('\n\nNPTF: \n')
 f.write('N_GCE = ')
@@ -207,10 +212,11 @@ p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 
 norm_disk_lim = (1-n1_disk)*(1-n2_disk) / l_b_disk / a
 
-#num_range = np.geomspace(l_th, l_M_disk,10000)
-#den_range = np.geomspace(l_m_disk, l_M_disk, 10000)
-d = integrate.quad(l_bpl, l_m_disk, l_M_disk, args=(norm_disk_lim, l_b_disk, n1_disk, n2_disk), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
-n = integrate.quad(broken_pl, l_th, l_M_disk, args=(norm_disk_lim, l_b_disk, n1_disk, n2_disk), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+arg=(norm_disk_lim, l_b_disk, n1_disk, n2_disk)
+d = log_scale_int(l_bpl, l_m_disk, max, 1.0e50, arg, abs_err, rel_err, div_numb)
+n = log_scale_int(broken_pl, l_th, max, 1.0e50, arg, abs_err, rel_err, div_numb)
+#d = integrate.quad(l_bpl, l_m_disk, l_M_disk, args=(norm_disk_lim, l_b_disk, n1_disk, n2_disk), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+#n = integrate.quad(broken_pl, l_th, l_M_disk, args=(norm_disk_lim, l_b_disk, n1_disk, n2_disk), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 #print(n[0], "  ", n[1])
 
 f.write('\n\nDisk: \n')
