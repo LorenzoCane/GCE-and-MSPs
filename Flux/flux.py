@@ -7,11 +7,14 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from iminuit import Minuit
 from iminuit.cost import LeastSquares
-from gce import gNRW2, broken_pl_arr, broken_pl, GeVtoerg
-from jacobi import propagate
+import sys
+sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
+from tools import cmtokpc, log_scale_int, GeVtoerg
+from gce import gNRW2, broken_pl_arr, broken_pl
+#from jacobi import propagate
 import os
 
-#****************************************************************
+#***************************************************************
 #****************************************************************
 #USEFUL VALUES 
 start_time = time.monotonic()
@@ -64,17 +67,17 @@ d = Data()
 #****************************************************************
 #Fit with a broken power law
 l = LeastSquares(d.emeans, d.flux, d.full_sigma, broken_pl_arr) 
-m = Minuit(l, 1.0e-6, 2.06, 1.42, 2.63, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
+m = Minuit(l, 1.0e-6, 2.06, -0.6, 0.63, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
 
 m.migrad()
 m.hesse()
 
-#m.values[2], m.values[3] = m.values[2]+2 , m.values[3]+2  #to be better compared with Dinsmore values
+m.values[2], m.values[3] = m.values[2]+2 , m.values[3]+2  #to be better compared with Dinsmore values
 f.write('Fit parameters:'), f.write('\n')
 for key, value, error in zip(m.parameters, m.values, m.errors):
     line = [str(key), ' = ', str(value), ' +- ', str(error), '\n']
     for i in line: f.write(i)
-#m.values[2], m.values[3] = m.values[2]-2 , m.values[3]-2  #go back to fit values
+m.values[2], m.values[3] = m.values[2]-2 , m.values[3]-2  #go back to fit values
 #y, ycov = propagate(lambda norm, xb, n1, n2: broken_pl(d.emeans, norm, xb, n1, n2)[1], m.values, m.covariance)
 #****************************************************************
 #Calculation of the total flux
