@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 import os
 
-test_numb = 3
+test_numb = 2
 
 #------------------------------------------
 #some usefull constants/bounds
@@ -22,6 +22,7 @@ rc = 8.5 #kpc
 abs_err = 0.0
 rel_err = 1.0e-8
 div_numb = 100
+inf_approx = 1.0e70
 
 #--------------------------------------------
 #Functions
@@ -73,15 +74,15 @@ def log_range_conv(x1, x2, inf_approx):
 
     return [y1, y2]
 
-def func_log(y, func):
-    return np.log(10) * 10**y * func(10**y)
+def func_log(y, func, arg):
+    return np.log(10) * 10**y * func(10**y, *arg)
 
-def log_scale_int(func, x_min, x_max, inf_approx, abs_err, rel_err, div_numb):
+def log_scale_int(func, x_min, x_max, inf_approx, arg, abs_err, rel_err, div_numb):
     y_lim = log_range_conv(x_min, x_max, inf_approx)
     y1 = y_lim[0]
     y2 = y_lim[1]
 
-    res = integrate.quad(func_log, y1, y2,  args=(func), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+    res = integrate.quad(func_log, y1, y2,  args=(func, arg), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 
     return res
 
@@ -111,20 +112,23 @@ if test_numb == 1:
 #********************************************************************************************
 elif test_numb == 2 :
     #GAMMA INCOMPLETE IMPLEMENTATION
-    def integr(t, s):
-        return t**(s-1) * np.exp(-t)
 
-    def mygamma(s,x):
-        I = integrate.quad(integr, x , 1.0e50, args=(s))
+
+    def mygamma_inc(s,x,inf_approx, abs_err, rel_err, div_numb):
+        def integr(t, s):
+            return t**(s-1) * np.exp(-t)
+        arg = (s,)
+        I = log_scale_int(integr, x, np.infty, inf_approx, arg, abs_err, rel_err, div_numb)
+        #I = integrate.quad(integr, x , 1.0e70, args=(s), epsabs=abs_err, epsrel=rel_err, limit=div_numb)
         return I
 
-    norm = mygamma(-0.94, 1.0e-6)[0]
-    print(norm * (1.0e35)**(1-1.94))
+    norm = mygamma_inc(-0.94, 1.0e-6, inf_approx, abs_err, rel_err, div_numb)[0]
+    print(norm* 1.0e35**(1-1.94))
 
 #********************************************************************************************
 elif test_numb == 3 :
     #LOG-SCALE INTEGRATION
-    inf_approx = 1.0e50
+  
     x1 = 0
     x2 = 10
     y_lim = log_range_conv(x1, x2, inf_approx)
@@ -134,8 +138,8 @@ elif test_numb == 3 :
 
     def func_x(x):
         return x
-    
-    integr =log_scale_int(func_x, x1, x2, inf_approx, abs_err, rel_err, div_numb)
+    arg = ()
+    integr =log_scale_int(func_x, x1, x2, inf_approx, arg, abs_err, rel_err, div_numb)
 
     print(y1, "  ", y2)
     print(integr)

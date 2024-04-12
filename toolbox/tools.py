@@ -37,15 +37,30 @@ def log_range_conv(x1, x2, inf_approx):
     return [y1, y2]
 #-------------------------------------------------------
 
-def func_log(y, func, arg):
+def integrand_log(y, func, arg):
+    #tranf a integrand into its log scaled form
+    #y: variable of the func; func: func of which tha log scaling is desired; arg: arguments of func
     return np.log(10) * 10**y * func(10**y, *arg)
 #-------------------------------------------------------
 
 def log_scale_int(func, x_min, x_max, inf_approx, arg, abs_err, rel_err, div_numb):
+    #perform the log-scaled integral of a funcion func 
+    #x1, x2: original integrational limits; inf_approx: infinit approx; arg: argument of func; other parameters used as in quad
     y_lim = log_range_conv(x_min, x_max, inf_approx)
     y1 = y_lim[0]
     y2 = y_lim[1]
 
-    res = integrate.quad(func_log, y1, y2,  args=(func, arg), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+    res = integrate.quad(integrand_log, y1, y2,  args=(func, arg), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 
     return res
+#-------------------------------------------------------
+
+def mygamma_inc(s,x, inf_approx, abs_err, rel_err, div_numb):
+    #gamma incomplete calculation of s with lower limit x
+    #inf approx: infinity approx desired; other parameters used as in quad
+    def integr(t, s):
+        return t**(s-1) * np.exp(-t)
+    arg = (s,)
+    I = log_scale_int(integr, x, np.infty, inf_approx, arg, abs_err, rel_err, div_numb)
+    #I = integrate.quad(integr, x , 1.0e70, args=(s), epsabs=abs_err, epsrel=rel_err, limit=div_numb)
+    return I[0]

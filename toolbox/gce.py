@@ -8,14 +8,10 @@ import os
 #LUMINOSITY FUNCTIONS DEFINITIONS
 
 # array power law func(high flux exp c-o, low flux step c-o)
-def power_law (l, alpha , l_min , l_max, a):   #alpha: slope, l_min = step c-o, l_max: exp c-o               
-    if (a):
-        den =5.84e-28
-    else:
-        den = 6.31e-15
+def power_law (l, alpha ,l_max, norm):  #alpha: slope, l_min = step c-o, l_max: exp c-o               
     num = l**(-alpha) * np.exp(-l/l_max)
 
-    return num / den 
+    return norm * num  
 #-----------------------------------------------------------------------------
 
 # array log normal func
