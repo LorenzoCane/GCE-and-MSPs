@@ -39,10 +39,9 @@ rc = 8.5           #kpc            #Earth-GC distance
 #solid angle integration
 options = {'epsabs': abs_err, 'epsrel' : rel_err, 'limit' : div_numb}
 #num = integrate.nquad(gNRW2, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_max]] , args=(rs, g, rc), opts=options)
-i1 = integrate.quad(np.sin, b_min, b_max, epsabs = abs_err, epsrel = rel_err, limit=div_numb)
-i2 = integrate.quad(np.cos, l_min, l_max, epsabs = abs_err, epsrel = rel_err, limit=div_numb)
-ang_norm = 4*(b_max-b_min)*(np.cos(l_min)-np.cos(l_max))
-#energy integratio bound
+ang_norm = 2*(b_max-b_min)*(np.sin(l_max)-np.sin(l_min))
+print(ang_norm)
+#energy integration bound
 e_min = 0.1  #GeV
 e_max = 10   #GeV
 #****************************************************************
@@ -67,8 +66,10 @@ d = Data()
 
 #****************************************************************
 #Fit with a broken power law
-l = LeastSquares(d.emeans, d.flux, d.full_sigma, broken_pl_arr) 
-m = Minuit(l, 1.0e-6, 2.06, -0.6, 0.63, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
+l = LeastSquares(d.emeans, d.flux, d.full_sigma , broken_pl_arr) 
+m = Minuit(l, 1.0e-6, 2.06, -0.58, 0.63, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
+
+m.fixed["E_b", "n1", "n2"] = True
 
 m.migrad()
 m.hesse()
@@ -84,7 +85,7 @@ m.values[2], m.values[3] = m.values[2]-2 , m.values[3]-2  #go back to fit values
 #Calculation of the total flux
 I = log_scale_int(broken_pl, e_min, e_max, inf_approx, tuple(m.values), abs_err, rel_err, div_numb)
 #I = integrate.quad(broken_pl, e_min, e_max, args=tuple(m.values), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
-print(I[0], "  ", I[1])
+#print(I[0], "  ", I[1])
 f.write('--------------------------------------------------------\n\n')
 fluxres1 =["Flux (in sr units): \nF_Omega =" , str(I[0]), " [GeV/cm^2/s/sr] = ", str(GeVtoerg(I[0])) , "[erg/cm^2/s/sr]", '\n']
 fluxres2 =["Flux: \nF =" , str(I[0]*ang_norm) , " [GeV/cm^2/s] = ", str(GeVtoerg(I[0])*ang_norm) , "[erg/cm^2/s]"]
