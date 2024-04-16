@@ -76,50 +76,52 @@ elif exercise == 3 :
     x_max = 1.0
     x_min = -x_max
     draw = np.linspace(x_min, x_max, 10000)
-    n_bins = 100
-    sigma = 0.5
+
+    sigma = 0.8
     mu = 0.0
 
-    sample_dim = 100000
+    sample_dim = 1000000  
+    n_bins = int(sample_dim**0.5)
 
     arg = () 
     
     def func_norm(x, func, arg, x_min, x_max):
-       i = integrate.quad(func, x_min, x_max, *arg, epsabs=0.0, epsrel=1.0e-6)[0]
-       return func(x, *arg) / i 
+        i = integrate.quad(func, x_min, x_max, *arg, epsabs=0.0, epsrel=1.0e-6)[0]
+        return func(x, *arg) / abs(i) 
     
-    def lim_gaussian(x , x0, sigma, x_min, x_max):
-       norm1 = 1.0 / sigma * (2.0 * np.pi)**0.5
-
-       return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2) * norm1
+    def gaussian_norm(x , x0, sigma, x_min, x_max):
+        norm1 = 1.0 / sigma / (2.0 * np.pi)**0.5
+        norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
+        return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
     
     
     def myfunc(x):
-      return -(x*x)+2
+        return -abs(x)+ 1.0
     
 
    
-    M = 1
+    M = 3.54
 
     temp = []
 
     counter = 0 
-
+    iter = 0
     while counter < sample_dim:
        
         u1 = rng.random()
         u2 = rng.random()
 
-        y = sigma * (np.sin(2*np.pi*u1) * (-2 * np.log(u2))**0.5) + mu
+        y = sigma * (np.sin(2.0*np.pi*u1) * (-2.0 * np.log(u2))**0.5) + mu
         u = rng.random()
 
-        discr = func_norm(y, myfunc, arg, x_min, x_max) / M / gaussian(y, mu, sigma)
+        discr = func_norm(y, myfunc, arg, x_min, x_max) / M / gaussian_norm(y, mu, sigma, -np.infty, np.infty)
         if u < discr : 
             temp.append(y)
             counter += 1
+        iter += 1
 
     x = np.array(temp)
-    print(x)
+    print("Iterations needed: ", iter)
 
 
  #plot
@@ -136,4 +138,4 @@ plt.savefig(os.path.join("function_sample.png"))
 
 
 end_time = time.monotonic()
-print(timedelta(seconds= end_time - start_time))
+print("Execution time: " , timedelta(seconds= end_time - start_time))
