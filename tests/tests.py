@@ -1,9 +1,9 @@
 #Import
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import scipy.integrate as integrate
-import os
+#import os
 
 test_numb = 2
 
