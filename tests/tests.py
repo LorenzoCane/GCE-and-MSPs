@@ -1,11 +1,11 @@
 #Import
 
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import scipy.integrate as integrate
-#import os
+import os
 
-test_numb = 2
+test_numb = 5
 
 #------------------------------------------
 #some usefull constants/bounds
@@ -143,3 +143,52 @@ elif test_numb == 3 :
 
     print(y1, "  ", y2)
     print(integr)
+
+#********************************************************************************************
+elif test_numb == 4 :
+
+    def normal_distr(mu, sigma):
+        rng = np.random.default_rng()
+        u1 = rng.random()
+        u2 = rng.random()
+
+        y = sigma * (np.sin(2.0*np.pi*u1) * (-2.0 * np.log(u2))**0.5) + mu
+
+        return y
+    
+    mu = 0.0
+    sigma = 1.0
+    n = 10000
+    n_bins = round(n**0.5)
+    counter = 0
+    temp = []
+    while counter < n :
+        temp.append(normal_distr(mu, sigma))
+        counter +=  1
+
+    x = np.array(temp)   
+
+    fig, ax = plt.subplots()
+
+    count, bins, ignored = ax.hist(x, n_bins, density=True)
+    plt.savefig(os.path.join("test.png"))
+#********************************************************************************************
+elif test_numb == 5 :
+    x_min = 0.0
+    x_max = 10.0
+
+
+    def bounded_norm_distr(mu, sigma, x_min, x_max):
+        rng = np.random.default_rng()
+
+
+        y = x_min - 1.0
+        while y < x_min or y > x_max :
+            u1 = rng.random()
+            u2 = rng.random()
+            y = sigma * (np.sin(2.0*np.pi*u1) * (-2.0 * np.log(u2))**0.5) + mu
+            print(y)
+    
+        return y
+    
+    y = bounded_norm_distr(1.0, 0.5, x_min, x_max)

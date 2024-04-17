@@ -5,7 +5,8 @@ import scipy.integrate as integrate
 #from scipy.special import gammaincc,gamma, exp1
 #import os
 
-
+#*************************************************************
+#Conversion between units
 def GeVtoerg(x):
     #convertion from GeV to erg
     return x * 0.00160218
@@ -19,7 +20,9 @@ def cmtokpc(x):
 def kpctocm(x):
     #convertion from kpc to cm
     return x * 3.0857e21
-#-------------------------------------------------------
+
+#*************************************************************
+#Log-scale conversion and integration
 
 def log_range_conv(x1, x2, inf_approx):
     #transform the limits of an integral into the log-scale int. limits
@@ -53,7 +56,10 @@ def log_scale_int(func, x_min, x_max, inf_approx, arg, abs_err, rel_err, div_num
     res = integrate.quad(integrand_log, y1, y2,  args=(func, arg), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 
     return res
-#-------------------------------------------------------
+
+#*************************************************************
+
+#Mathematical functions
 
 def mygamma_inc(s,x, inf_approx, abs_err, rel_err, div_numb):
     #gamma incomplete calculation of s with lower limit x
@@ -64,3 +70,47 @@ def mygamma_inc(s,x, inf_approx, abs_err, rel_err, div_numb):
     I = log_scale_int(integr, x, np.infty, inf_approx, arg, abs_err, rel_err, div_numb)
     #I = integrate.quad(integr, x , 1.0e70, args=(s), epsabs=abs_err, epsrel=rel_err, limit=div_numb)
     return I[0]
+
+#*************************************************************
+
+#Random distribution algorithms
+
+def normal_distr(mu, sigma):
+    rng = np.random.default_rng()
+    u1 = rng.random()
+    u2 = rng.random()
+
+    y = sigma * (np.sin(2.0*np.pi*u1) * (-2.0 * np.log(u2))**0.5) + mu
+
+    return y
+
+#-------------------------------------------------------
+
+def bounded_norm_distr(mu, sigma, x_min, x_max):
+    rng = np.random.default_rng()
+    y = x_min - 1.0
+
+    while y < x_min or y > x_max :
+        u1 = rng.random()
+        u2 = rng.random()
+        y = sigma * (np.sin(2.0*np.pi*u1) * (-2.0 * np.log(u2))**0.5) + mu
+
+        return y
+
+
+#def gamma_distr(k, theta):
+#    rng = np.random.default_rng()
+
+#    if k == 1.0:
+#        u = rng.random()
+#        x = -np.log(u)
+#    elif k < 1.0 and k > 0.0:
+#        v1 = 1.0 + k/np.e
+#        u1 = rng.random()
+#        u2 = rng.random()
+#        v2 = v1 * u1
+
+#        if v2 <= 1.0: 
+#            x = 0.0
+#            x = v2**(1.0/k)
+#            u2

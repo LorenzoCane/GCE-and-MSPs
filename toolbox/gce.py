@@ -1,8 +1,6 @@
 
 import numpy as np
 #import scipy.integrate as integrate
-from scipy.special import gammaincc,gamma, exp1
-import os
 
 
 #LUMINOSITY FUNCTIONS DEFINITIONS
