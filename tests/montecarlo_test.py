@@ -9,20 +9,29 @@ from scipy.special import erf
 import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
-from tools import bounded_norm_distr, log_scale_int
+from tools import bounded_norm_distr, log_scale_int, normal_distr
 start_time = time.monotonic()
 
-exercise = 3
-marker_st =  '+'
+
+exercise = 3      #to execute only one exercise at time
+
+#**************************************************************
+#plotting config
+marker_st =  'o'        
 marker_color = 'orange'
 func_color = 'black'
 
-npoints = 1000000
-rng = np.random.default_rng()
+#-----------------------------------------------
+#integral config
+abs_err = 0.0
+rel_err = 1.0e-6
+inf_approx = 1.0e20
+#**************************************************************
 
 #42.4.1 Exponential decay
 if exercise == 1:
-    
+    npoints = 1000000
+
     x = np.linspace(0,10,10000)
 
     tau = 5 
@@ -55,6 +64,7 @@ if exercise == 1:
 elif exercise == 2:
     count = 0
     Sin, Cos = [], []
+    npoints = 1000000
     while count < npoints:
         u1 = rng.random()
         u2 = rng.random()
@@ -76,17 +86,17 @@ elif exercise == 2:
 #FUNCTION SAMPLING
 elif exercise == 3 :
 
-    inf_approx = 1.0e20
+    rng = np.random.default_rng()
 
-    x_max = 2.5
-    x_min = 0.5
-    draw = np.geomspace(x_min, x_max, 10000)
+    x_min = -1.0
+    x_max = 1.0
+    draw = np.linspace(x_min, x_max, 10000)
 
-    sigma = 0.6
+    sigma = 1.0
     mu = 1.0
 
 
-    sample_dim = 10000
+    sample_dim = 1.0e3
     n_bins = round(sample_dim**0.5)
 
     k = 1.0
@@ -94,23 +104,28 @@ elif exercise == 3 :
     beta = 1.0
     arg = () 
     
-    def func_norm(x, func, arg, x_min, x_max):
-        i =  log_scale_int(func, x_min, x_max, inf_approx, arg, 0.0, 1.0e-4, 50)[0]
-        return func(x, *arg) / abs(i) 
+    def func_norm(x, func, arg, x_min, x_max, sam_dim):
+        i =  integrate.quad(func,x_min, x_max, arg, epsabs=abs_err, epsrel=rel_err)[0]
+        return func(x, *arg) / i * sam_dim
     
     def gaussian_norm(x , x0, sigma, x_min, x_max):
         norm1 = 1.0 / sigma / (2.0 * np.pi)**0.5
         norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
         return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
     
-    
+    test_func = 1
     def myfunc(x):
-        a = np.exp(5.0/x) - 1.0
-        return 1.0 / a / x**5.0
-    
+        if test_func == 0: 
+            #log parabola
+            a = alpha - beta * np.log10(x)
+            return k * x**a
+        if test_func == 1:
+            #abs func (cusp)
+            return -abs(x) + 2.0
+        
 
-   
-    M = 15
+    #print(integrate.quad(func_norm,x_min, x_max, (myfunc, arg, x_min, x_max, sample_dim), epsabs=abs_err, epsrel=rel_err)[0])
+    M = 5.0
 
     temp = []
 
@@ -119,33 +134,37 @@ elif exercise == 3 :
     while counter < sample_dim:
 
         y = bounded_norm_distr(mu, sigma, x_min, x_max)
+        #y = normal_distr(mu, sigma)
         u = rng.random()
 
-        discr = func_norm(y, myfunc, arg, x_min, x_max) / M / gaussian_norm(y, mu, sigma, -np.infty, np.infty)
+        discr = func_norm(y, myfunc, arg, x_min, x_max, 1.0) / M / gaussian_norm(y, mu, sigma, x_min, x_max)
         if u < discr : 
             temp.append(y)
             counter += 1
-        iter += 1
+        iter += 1 
 
     x = np.array(temp)
     print("Iterations needed: ", iter)
 
-
+#---------------------------------------------------------------------------------------------
  #plot
-
+    i =  integrate.quad(myfunc,x_min, x_max, arg, epsabs=abs_err, epsrel=rel_err)[0]
     fig, ax = plt.subplots()
-    ax2 = ax.twiny()
-    ax.plot(draw, func_norm(draw, myfunc, arg, x_min, x_max), color = "black", label = "function f(x)")
-    #ax.plot (draw, gaussian(draw, mu, sigma))
-    count, bins, ignored = ax.hist(x, n_bins, density=True)
-    y_n, bin_edges = np.histogram(x, n_bins, density = True)
+    #ax.plot(draw, func_norm(draw, myfunc, arg, x_min, x_max, sample_dim), color = "black", label = "function f(x)")
+    ax.plot(draw, myfunc(draw) /i, color = "black", label = "function f(x)")
+
+    y_n, bin_edges = np.histogram(x, n_bins, density = False)
     bin_means = np.zeros(len(bin_edges)-1)
     for n in range(0 , len(bin_edges)-1):
         bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5 
 
-    ax.scatter(bin_means, y_n, color = 'red')
-    #y_err = 1.0/ y_n**0.5
-    #ax2 = plt.errorbar(bin_means, y_n, yerr = y_err, color='black', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
+
+    #print(np.sum(y_n))
+    y_err = (y_n)**0.5
+    #ax.plot (draw, gaussian(draw, mu, sigma))
+    #count, bins, ignored = ax.hist(x, n_bins, density=True)
+    #ax.scatter(bin_means, y_n, marker = marker_st, color = marker_color)
+    #ax.errorbar(bin_means, y_n, yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
 
 
 

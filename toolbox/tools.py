@@ -95,7 +95,7 @@ def bounded_norm_distr(mu, sigma, x_min, x_max):
         u2 = rng.random()
         y = sigma * (np.sin(2.0*np.pi*u1) * (-2.0 * np.log(u2))**0.5) + mu
 
-        return y
+    return y
 
 
 #def gamma_distr(k, theta):
