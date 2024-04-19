@@ -91,12 +91,12 @@ elif exercise == 3 :
     x_min = -1.0
     x_max = 1.0
     draw = np.linspace(x_min, x_max, 10000)
-
+ 
     sigma = 1.0
-    mu = 1.0
+    mu = 0.0
 
 
-    sample_dim = 1.0e3
+    sample_dim = 1.0e2
     n_bins = round(sample_dim**0.5)
 
     k = 1.0
@@ -114,18 +114,21 @@ elif exercise == 3 :
         return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
     
     test_func = 1
+    label_func = ''
     def myfunc(x):
         if test_func == 0: 
             #log parabola
-            a = alpha - beta * np.log10(x)
-            return k * x**a
-        if test_func == 1:
+            a = alpha - beta * np.log10(x+2.0)
+            return k * (x+2.0)**a 
+        elif test_func == 1:
             #abs func (cusp)
             return -abs(x) + 2.0
+        elif test_func == 2:
+            return -x+2.0
         
 
     #print(integrate.quad(func_norm,x_min, x_max, (myfunc, arg, x_min, x_max, sample_dim), epsabs=abs_err, epsrel=rel_err)[0])
-    M = 5.0
+    M = 20.0
 
     temp = []
 
@@ -148,28 +151,112 @@ elif exercise == 3 :
 
 #---------------------------------------------------------------------------------------------
  #plot
-    i =  integrate.quad(myfunc,x_min, x_max, arg, epsabs=abs_err, epsrel=rel_err)[0]
     fig, ax = plt.subplots()
-    #ax.plot(draw, func_norm(draw, myfunc, arg, x_min, x_max, sample_dim), color = "black", label = "function f(x)")
-    ax.plot(draw, myfunc(draw) /i, color = "black", label = "function f(x)")
 
     y_n, bin_edges = np.histogram(x, n_bins, density = False)
     bin_means = np.zeros(len(bin_edges)-1)
     for n in range(0 , len(bin_edges)-1):
         bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5 
+    
+    bin_dim = np.diff(bin_edges)[0]
 
 
-    #print(np.sum(y_n))
+    #print(np.sum(y_n/sample_dim))
     y_err = (y_n)**0.5
     #ax.plot (draw, gaussian(draw, mu, sigma))
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
     #ax.scatter(bin_means, y_n, marker = marker_st, color = marker_color)
-    #ax.errorbar(bin_means, y_n, yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
+    ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Rej-Acc method)')
+    ax.plot(draw, func_norm(draw, myfunc, arg, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
+    #ax.plot(draw, myfunc(draw) /i , color = "black", label = "function f(x)")
 
 
 
-    #plt.legend()
+    plt.legend()
     plt.savefig(os.path.join("function_sample.png"))
+
+#**************************************************************
+#FUNCTION MULTI- SAMPLING
+elif exercise == 4 : 
+    
+    x_min = -1.0
+    x_max = 1.0
+    draw = np.linspace(x_min, x_max, 10000)
+ 
+    sigma = 1.0
+    mu = 0.0
+
+    n_samples = 3
+    sample_dim = 1.0e3
+    n_bins = round(sample_dim**0.5)
+
+    k = 1.0
+    alpha = -2.0
+    beta = 1.0
+    arg = () 
+
+    fig, ax = plt.subplots()
+    
+    def func_norm(x, func, arg, x_min, x_max, sam_dim):
+        i =  integrate.quad(func,x_min, x_max, arg, epsabs=abs_err, epsrel=rel_err)[0]
+        return func(x, *arg) / i * sam_dim
+    
+    def gaussian_norm(x , x0, sigma, x_min, x_max):
+        norm1 = 1.0 / sigma / (2.0 * np.pi)**0.5
+        norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
+        return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
+    
+    test_func = 0
+    def myfunc(x):
+        if test_func == 0: 
+            #log parabola
+            a = alpha - beta * np.log10(x+2.0)
+            return k * (x+2.0)**a 
+        elif test_func == 1:
+            #abs func (cusp)
+            return -abs(x) + 2.0
+        elif test_func == 2:
+            return -x+2.0
+        
+    
+    M = 9.0
+
+    for i in range(0, n_samples):
+        rng = np.random.default_rng()
+        temp = []
+
+        counter = 0 
+        iter = 0
+        while counter < sample_dim:
+
+            y = bounded_norm_distr(mu, sigma, x_min, x_max)
+            u = rng.random()
+
+            discr = func_norm(y, myfunc, arg, x_min, x_max, 1.0) / M / gaussian_norm(y, mu, sigma, x_min, x_max)
+            if u < discr : 
+                temp.append(y)
+                counter += 1
+            iter += 1 
+
+        x = np.array(temp)
+
+        print("Iterations needed for simulation" , i+1 , ": ", iter)
+
+        y_n, bin_edges = np.histogram(x, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5 
+    
+        bin_dim = np.diff(bin_edges)[0]
+        y_err = (y_n)**0.5
+        lab = "MCS #" + str(i+1)
+        ax.errorbar(bin_means, y_n , yerr = y_err, capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = lab)
+
+    ax.plot(draw, func_norm(draw, myfunc, arg, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
+
+    plt.legend()
+    plt.savefig(os.path.join("multi_sample.png"))
+
 
 
 end_time = time.monotonic()
