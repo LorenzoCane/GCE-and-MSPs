@@ -13,7 +13,7 @@ from tools import bounded_norm_distr, log_scale_int, normal_distr
 start_time = time.monotonic()
 
 
-exercise = 3      #to execute only one exercise at time
+exercise = 3   #to execute only one exercise at time
 
 #**************************************************************
 #plotting config
@@ -26,8 +26,8 @@ func_color = 'black'
 abs_err = 0.0
 rel_err = 1.0e-6
 inf_approx = 1.0e20
-#**************************************************************
 
+#**************************************************************
 #42.4.1 Exponential decay
 if exercise == 1:
     npoints = 1000000
@@ -60,8 +60,11 @@ if exercise == 1:
 
     plt.savefig(os.path.join('exp_dist.png'))
 
+#**************************************************************
 #42.4.2 Isotropic direction in 3D
 elif exercise == 2:
+    rng = np.random.default_rng()
+
     count = 0
     Sin, Cos = [], []
     npoints = 1000000
@@ -83,39 +86,48 @@ elif exercise == 2:
     plt.savefig(os.path.join('sin_and_cos.png'))
 
 #**************************************************************
-#FUNCTION SAMPLING
+#REJECTION-ACCEPTANCE METHOD FUNCTION SAMPLING
 elif exercise == 3 :
-
+ #RAM parameters
     rng = np.random.default_rng()
 
-    x_min = -1.0
+    x_min = -1.0                            #interval of integration  
     x_max = 1.0
     draw = np.linspace(x_min, x_max, 10000)
+
+    sample_dim = 1.0e2                      #number of points in the sample
+    n_bins = round(sample_dim**0.5)         #numbers of bins for scatter/hist plot
+    M = 20.0                                # Parameter of selection (must be as small as possible) 
  
-    sigma = 1.0
+ #Gaussian distr parameters   
+    sigma = 1.0 
     mu = 0.0
 
-
-    sample_dim = 1.0e2
-    n_bins = round(sample_dim**0.5)
-
-    k = 1.0
+ #f(x) parameters
+    k = 1.0       
     alpha = -2.0
     beta = 1.0
-    arg = () 
+
+    arg = ()  
     
-    def func_norm(x, func, arg, x_min, x_max, sam_dim):
+ #-----------------------------------------------
+    #Functions definition
+
+    def func_norm(x, func, arg, x_min, x_max, normal):
+        #takes a function "func" with arguments "arg" and normalize it to "normal" on the range (x_min; x_max)
         i =  integrate.quad(func,x_min, x_max, arg, epsabs=abs_err, epsrel=rel_err)[0]
-        return func(x, *arg) / i * sam_dim
+        return func(x, *arg) / i * normal
     
-    def gaussian_norm(x , x0, sigma, x_min, x_max):
+    def gaussian(x , x0, sigma, x_min, x_max):
+        #Gauss distribution function with  peak at x0 and width sigma. Normalized on the range (x_min; x_max)
         norm1 = 1.0 / sigma / (2.0 * np.pi)**0.5
         norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
         return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
     
-    test_func = 1
-    label_func = ''
+    test_func = 1                   #use this to move between test functions f(x)         
+
     def myfunc(x):
+        #f(x) functions used to test algorithm
         if test_func == 0: 
             #log parabola
             a = alpha - beta * np.log10(x+2.0)
@@ -126,21 +138,19 @@ elif exercise == 3 :
         elif test_func == 2:
             return -x+2.0
         
-
-    #print(integrate.quad(func_norm,x_min, x_max, (myfunc, arg, x_min, x_max, sample_dim), epsabs=abs_err, epsrel=rel_err)[0])
-    M = 20.0
+    #print(integrate.quad(func_norm,x_min, x_max, (myfunc, arg, x_min, x_max, sample_dim), epsabs=abs_err, epsrel=rel_err)[0])               
 
     temp = []
 
-    counter = 0 
-    iter = 0
+    counter = 0                     #counter of successfully selected points 
+    iter = 0                        #iterations need to collect the desired number of accepted points
     while counter < sample_dim:
 
-        y = bounded_norm_distr(mu, sigma, x_min, x_max)
+        y = bounded_norm_distr(mu, sigma, x_min, x_max)         
         #y = normal_distr(mu, sigma)
         u = rng.random()
 
-        discr = func_norm(y, myfunc, arg, x_min, x_max, 1.0) / M / gaussian_norm(y, mu, sigma, x_min, x_max)
+        discr = func_norm(y, myfunc, arg, x_min, x_max, 1.0) / M / gaussian(y, mu, sigma, x_min, x_max)
         if u < discr : 
             temp.append(y)
             counter += 1
@@ -149,7 +159,7 @@ elif exercise == 3 :
     x = np.array(temp)
     print("Iterations needed: ", iter)
 
-#---------------------------------------------------------------------------------------------
+ #---------------------------------------------------------------------------------------------
  #plot
     fig, ax = plt.subplots()
 
@@ -173,10 +183,10 @@ elif exercise == 3 :
 
 
     plt.legend()
-    plt.savefig(os.path.join("function_sample.png"))
+    plt.savefig(os.path.join("RAM_function_sample.png"))
 
 #**************************************************************
-#FUNCTION MULTI- SAMPLING
+#REJECTION-ACCEPTANCE METHOD FUNCTION MULTIPLE-SAMPLING
 elif exercise == 4 : 
     
     x_min = -1.0
@@ -255,7 +265,7 @@ elif exercise == 4 :
     ax.plot(draw, func_norm(draw, myfunc, arg, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
 
     plt.legend()
-    plt.savefig(os.path.join("multi_sample.png"))
+    plt.savefig(os.path.join("RAM_multi_sample.png"))
 
 
 
