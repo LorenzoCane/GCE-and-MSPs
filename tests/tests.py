@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 import os
 
-test_numb = 5
+test_numb = 7
 
 #------------------------------------------
 #some usefull constants/bounds
@@ -87,7 +87,9 @@ def log_scale_int(func, x_min, x_max, inf_approx, arg, abs_err, rel_err, div_num
     return res
 
 
-
+def accum_func(a, func, arg, min):
+    acc = integrate.quad(func, min, a, arg, epsabs=0.0, epsrel=1.0e-6)[0]
+    return acc
 
 
 
@@ -192,3 +194,82 @@ elif test_numb == 5 :
         return y
     
     y = bounded_norm_distr(1.0, 0.5, x_min, x_max)
+
+#********************************************************************************************
+elif test_numb == 6 : #doesn't work
+    x_min = 0.0
+    x_max = 10.0
+
+    def Newton_root_finder(func, arg, a, c, value, tol, n_max ):
+        x_min = a
+
+    
+
+    test_func = 0
+    args = ()
+    value = 0
+    tol = 1.0e-6
+    n_max = 1.0e8
+
+    if test_func == 0:
+        value = 0.2
+        def myfunc(x):
+           return x*0.5 + 0.5
+        
+
+    res = Newton_root_finder(myfunc, args, x_min, x_max, value, tol, n_max)
+
+    print(res)
+
+#********************************************************************************************
+elif test_numb == 7: #doesnt work
+
+    x_min = -1.0
+    x_max = 10
+
+    def bisection(func, arg, a, b, tol, nmax):
+        dx = abs(b-a)
+        res = a + 0.5 * dx
+        k = 0
+        fa = func(a, *arg)
+        fb = func(b, *arg)
+        fres = func(res, *arg)
+
+        if fa == 0.0: return a
+        if fb == 0.0: return b
+
+
+        while (fres >= tol):
+            k += 1
+            if k>nmax: 
+                raise ValueError("Too many iteration in bisection root finder")
+
+            dx = abs(b-a)
+            res = a + 0.5 * dx
+            fres = func(res, *arg)
+
+            if (fa * fres) < 0.0:
+                b = res
+                fb = fres
+            else :
+                a = fres
+                fa = fres
+        print(fres)
+        return res
+    
+
+
+    test_func = 0
+    args = ()
+    value = 0
+    tol = 1.0e-12
+    n_max = 1.0e8
+
+  
+    def myfunc(x):
+        return x
+        
+
+    res = bisection(myfunc, args, x_min, x_max, tol, n_max)
+
+    print(res)

@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.special import erf
+from scipy.optimize import fsolve
 import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
@@ -13,7 +14,7 @@ from tools import bounded_norm_distr, log_scale_int, normal_distr
 start_time = time.monotonic()
 
 
-exercise = 3   #to execute only one exercise at time
+exercise = 5   #to execute only one exercise at time
 
 #**************************************************************
 #plotting config
@@ -86,7 +87,7 @@ elif exercise == 2:
     plt.savefig(os.path.join('sin_and_cos.png'))
 
 #**************************************************************
-#REJECTION-ACCEPTANCE METHOD FUNCTION SAMPLING
+#REJECTION-ACCEPTANCE METHOD SAMPLING
 elif exercise == 3 :
  #RAM parameters
     rng = np.random.default_rng()
@@ -186,11 +187,11 @@ elif exercise == 3 :
     plt.savefig(os.path.join("RAM_function_sample.png"))
 
 #**************************************************************
-#REJECTION-ACCEPTANCE METHOD FUNCTION MULTIPLE-SAMPLING
+#REJECTION-ACCEPTANCE METHOD MULTIPLE-SAMPLING
 elif exercise == 4 : 
     
-    x_min = -1.0
-    x_max = 1.0
+    x_min = 0.0
+    x_max = 10
     draw = np.linspace(x_min, x_max, 10000)
  
     sigma = 1.0
@@ -216,7 +217,7 @@ elif exercise == 4 :
         norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
         return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
     
-    test_func = 0
+    test_func = 2
     def myfunc(x):
         if test_func == 0: 
             #log parabola
@@ -226,7 +227,7 @@ elif exercise == 4 :
             #abs func (cusp)
             return -abs(x) + 2.0
         elif test_func == 2:
-            return -x+2.0
+            return 2*(-x+2.0)
         
     
     M = 9.0
@@ -267,6 +268,81 @@ elif exercise == 4 :
     plt.legend()
     plt.savefig(os.path.join("RAM_multi_sample.png"))
 
+#**************************************************************
+#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING
+elif exercise == 5 :
+    x_min = -1.0
+    x_max = 1.0
+    mid = (x_max + x_min)/2.0
+    draw = np.linspace(x_min, x_max, 10000)
+ 
+    k = 1.0
+    alpha = -2.0
+    beta = 1.0
+
+    #n_samples = 3
+    sample_dim = 1.0e3
+    n_bins = round(sample_dim**0.5)
+    counter = 0
+    tol = 1.0e-10
+
+    rng = np.random.default_rng()
+
+    test_func = 1
+    def myfunc(x):
+        if test_func == 0: 
+            #log parabola
+            a = alpha - beta * np.log10(x+2.0)
+            return (k * (x+2.0)**a) / 0.591333 
+        elif test_func == 1:
+            #abs func (cusp)
+            return (-abs(x) + 2.0) / 3.0
+        elif test_func == 2:
+            return (-x+2.0)*0.25
+
+    fig, ax = plt.subplots()
+    arg1 = ()
+    arg = (myfunc, arg1, x_min)
+
+    def accum_func(a, func, arg, min):
+        acc = integrate.quad(func, min, a, arg, epsabs=0.0, epsrel=1.0e-12)[0]
+        return acc
+    
+    def func_shifter(x, func, args, value):
+        shifted = func(x, *args) - value
+        return shifted
+    
+    temp = []
+    while counter < sample_dim:
+        u = rng.random()
+        
+        zeros = fsolve(func_shifter, mid, (accum_func, arg, u), xtol= tol)
+        y = zeros
+        temp.append(y)
+        counter +=1
+
+    x = np.array(temp)
+
+    
+    y_n, bin_edges = np.histogram(x, n_bins, density = False)
+    bin_means = np.zeros(len(bin_edges)-1)
+    for n in range(0 , len(bin_edges)-1):
+        bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5 
+    
+    bin_dim = np.diff(bin_edges)[0]
+
+    y_err = (y_n)**0.5
+    #count, bins, ignored = ax.hist(x, n_bins, density=True)
+    ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inverse func method)')
+    
+    ax.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
+
+
+
+
+
+    plt.legend()
+    plt.savefig(os.path.join("inv_func_sample.png"))
 
 
 end_time = time.monotonic()
