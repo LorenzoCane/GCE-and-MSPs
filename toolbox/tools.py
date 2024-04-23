@@ -6,7 +6,80 @@ import scipy.integrate as integrate
 #import os
 
 #*************************************************************
+# Root finders
+
+def bisection(func, arg, a, b, tol, nmax, print_stat = False):
+    dx = abs(b-a)
+    res = a + 0.5 * dx
+    k = 0
+    fa = func(a, *arg)
+    fb = func(b, *arg)
+    fres = func(res, *arg)
+
+    if fa == 0.0: res = a
+    if fb == 0.0: res = b
+
+
+    while (abs(fres) >= tol):
+        if k>nmax: 
+            print(res)
+            raise ValueError("Too many iteration in bisection root finder")
+            
+        res = a + 0.5 * dx
+        fres = func(res, *arg)
+
+        if (fa * fres) < 0.0:
+            b = res
+            fb = fres
+        else :
+            a = res
+            fa = fres
+    
+        k += 1
+        dx = abs(b-a)
+        
+    if print_stat : 
+        print("# of iteractions: ", k, "\nRoot found: ", res, "\nFunction evaluated at root value: ", fres)
+
+    return res
+#-------------------------------------------------------
+def newton_root_finder(func, func_prime, arg, arg_prime, a, c, tol, n_max, print_stat = False ):
+    b = a + abs(c-a)
+    fa = func(a, *arg)
+    fb = func(b, *arg)
+    fb_prime = func_prime(b, *arg_prime)
+    dx = b - a
+    k = 0
+        
+    if fa == 0.0 : res = a
+    elif fb == 0.0 : res = b
+
+    else:
+        while (abs(fb) >= tol):
+            k += 1
+
+            if k > n_max:
+                #print(res)
+                raise ValueError("Too many iteration in bisection root finder")
+            
+            dx = fb / fb_prime
+            a = b
+            b -= dx
+
+            fb = func(b, *arg)
+            fb_prime = func_prime(b,  *arg_prime)
+        
+        res = b
+        fres = func(res, *arg)
+
+        if print_stat : 
+            print("# of iteractions: ", k, "\nRoot found: ", res, "\nFunction evaluated at root value: ", fres)
+
+        return res
+
+#*************************************************************
 #Conversion between units
+
 def GeVtoerg(x):
     #convertion from GeV to erg
     return x * 0.00160218
@@ -98,19 +171,3 @@ def bounded_norm_distr(mu, sigma, x_min, x_max):
     return y
 
 
-#def gamma_distr(k, theta):
-#    rng = np.random.default_rng()
-
-#    if k == 1.0:
-#        u = rng.random()
-#        x = -np.log(u)
-#    elif k < 1.0 and k > 0.0:
-#        v1 = 1.0 + k/np.e
-#        u1 = rng.random()
-#        u2 = rng.random()
-#        v2 = v1 * u1
-
-#        if v2 <= 1.0: 
-#            x = 0.0
-#            x = v2**(1.0/k)
-#            u2

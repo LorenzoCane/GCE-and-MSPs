@@ -10,11 +10,11 @@ from scipy.optimize import fsolve
 import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
-from tools import bounded_norm_distr, log_scale_int, normal_distr
+from tools import bounded_norm_distr, bisection, newton_root_finder
 start_time = time.monotonic()
 
 
-exercise = 5   #to execute only one exercise at time
+exercise = 6  #to execute only one exercise at time
 
 #**************************************************************
 #plotting config
@@ -269,7 +269,7 @@ elif exercise == 4 :
     plt.savefig(os.path.join("RAM_multi_sample.png"))
 
 #**************************************************************
-#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING
+#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using fsolve)
 elif exercise == 5 :
     x_min = -1.0
     x_max = 1.0
@@ -288,7 +288,7 @@ elif exercise == 5 :
 
     rng = np.random.default_rng()
 
-    test_func = 1
+    test_func = 2
     def myfunc(x):
         if test_func == 0: 
             #log parabola
@@ -333,7 +333,7 @@ elif exercise == 5 :
 
     y_err = (y_n)**0.5
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inverse func method)')
+    ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
     
     ax.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
 
@@ -342,7 +342,110 @@ elif exercise == 5 :
 
 
     plt.legend()
-    plt.savefig(os.path.join("inv_func_sample.png"))
+    plt.savefig(os.path.join("inv_func_sample(fsolve).png"))
+
+#**************************************************************
+#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using custom root finders)
+elif exercise == 6 :
+    x_min = -1.0
+    x_max = 1.0
+    mid = (x_max + x_min)/2.0
+    draw = np.linspace(x_min, x_max, 10000)
+    bisec = True
+    newton = True
+ 
+    k = 1.0
+    alpha = -2.0
+    beta = 1.0
+
+    #n_samples = 3
+    sample_dim = 1.0e3
+    n_bins = round(sample_dim**0.5)
+    counter = 0
+    tol = 1.0e-10
+    n_max = 1.0e5
+
+    rng = np.random.default_rng()
+
+    test_func = 1
+    def myfunc(x):
+        if test_func == 0: 
+            #log parabola
+            a = alpha - beta * np.log10(x+2.0)
+            return (k * (x+2.0)**a) / 0.591333 
+        elif test_func == 1:
+            #abs func (cusp)
+            return (-abs(x) + 2.0) / 3.0
+        elif test_func == 2:
+            return (-x+2.0)*0.25
+        
+    fig, ax = plt.subplots()
+    arg1 = ()
+    arg = (myfunc, arg1, x_min)
+
+    def accum_func(a, func, arg, min):
+        acc = integrate.quad(func, min, a, arg, epsabs=0.0, epsrel=1.0e-12)[0]
+        return acc
+    
+    def func_shifter(x, func, args, value):
+        shifted = func(x, *args) - value
+        return shifted
+    
+    if bisec:
+        temp = []
+        counter = 0
+        while counter < sample_dim:
+            u = rng.random()
+        
+            y = bisection(func_shifter, (accum_func, arg, u), x_min, x_max, tol, n_max)
+        
+            temp.append(y)
+            counter +=1
+
+        x = np.array(temp)
+
+    
+        y_n, bin_edges = np.histogram(x, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5 
+    
+        bin_dim = np.diff(bin_edges)[0]
+
+        y_err = (y_n)**0.5
+        #count, bins, ignored = ax.hist(x, n_bins, density=True)
+        ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + bisection)')
+    
+
+    if newton:
+        temp = []
+        counter = 0
+        while counter < sample_dim:
+            u = rng.random()
+        
+            y = newton_root_finder(func_shifter, myfunc, (accum_func, arg, u), arg1, x_min, x_max, tol, n_max)
+        
+            temp.append(y)
+            counter +=1
+
+        x2 = np.array(temp)
+
+    
+        y_n, bin_edges = np.histogram(x2, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5 
+    
+        bin_dim = np.diff(bin_edges)[0]
+
+        y_err = (y_n)**0.5
+        #count, bins, ignored = ax.hist(x, n_bins, density=True)
+        ax.errorbar(bin_means, y_n , yerr = y_err, color='blue', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + newton)')
+    
+    ax.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
+
+    plt.legend()
+    plt.savefig(os.path.join("inv_func_sample(custom).png"))
 
 
 end_time = time.monotonic()

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 import os
 
-test_numb = 7
+test_numb = 6
 
 #------------------------------------------
 #some usefull constants/bounds
@@ -196,38 +196,80 @@ elif test_numb == 5 :
     y = bounded_norm_distr(1.0, 0.5, x_min, x_max)
 
 #********************************************************************************************
-elif test_numb == 6 : #doesn't work
-    x_min = 0.0
-    x_max = 10.0
+elif test_numb == 6 : 
 
-    def Newton_root_finder(func, arg, a, c, value, tol, n_max ):
-        x_min = a
+    def Newton_root_finder(func, func_prime, arg, a, c, tol, n_max, print_stat = False ):
+        b = a + abs(c-a)
+        fa = func(a, *arg)
+        fb = func(b, *arg)
+        fb_prime = func_prime(b, *arg)
+        dx = b - a
+        k = 0
+        
+        if fa == 0.0 : res = a
+        elif fb == 0.0 : res = b
 
+        else:
+            while (abs(fb) >= tol):
+                k += 1
+
+                if k > n_max:
+                    #print(res)
+                    raise ValueError("Too many iteration in bisection root finder")
+            
+                dx = fb / fb_prime
+                a = b
+                b -= dx
+
+                fb = func(b, *arg)
+                fb_prime = func_prime(b,  *arg)
+        
+            res = b
+            fres = func(res, *arg)
+        if print_stat : 
+            print("# of iteractions: ", k, "\nRoot found: ", res, "\nFunction evaluated at root value: ", fres)
+
+        return res
+            
     
-
-    test_func = 0
+    x_min = 0.1
+    x_max = 3
+    test_func = 3
     args = ()
     value = 0
     tol = 1.0e-6
-    n_max = 1.0e8
+    n_max = 50
 
     if test_func == 0:
-        value = 0.2
         def myfunc(x):
-           return x*0.5 + 0.5
+            return x +1
+        def myfuncprime(x):
+            return 1.0
+    elif test_func == 1:
+        def myfunc(x):
+            return x*x -1.0
+        def myfuncprime(x):
+            return 2.0 *x 
+    elif test_func ==  2:
+        def myfunc(x):
+            return np.exp(x-1.0) - 2.0
+        def myfuncprime(x):
+            return np.exp(x-1.0)
+    elif test_func == 3:
+        def myfunc(x):
+            return np.log10(x**1.5) + 2.0 * x
+        def myfuncprime(x):
+            return 0.651442 / x + 2.0
         
 
-    res = Newton_root_finder(myfunc, args, x_min, x_max, value, tol, n_max)
+    res = Newton_root_finder(myfunc, myfuncprime, args, x_min, x_max, tol, n_max, True)
 
     print(res)
 
 #********************************************************************************************
-elif test_numb == 7: #doesnt work
+elif test_numb == 7:
 
-    x_min = -1.0
-    x_max = 10
-
-    def bisection(func, arg, a, b, tol, nmax):
+    def bisection(func, arg, a, b, tol, nmax, print_stat = False):
         dx = abs(b-a)
         res = a + 0.5 * dx
         k = 0
@@ -235,16 +277,15 @@ elif test_numb == 7: #doesnt work
         fb = func(b, *arg)
         fres = func(res, *arg)
 
-        if fa == 0.0: return a
-        if fb == 0.0: return b
+        if fa == 0.0: res = a
+        if fb == 0.0: res = b
 
 
-        while (fres >= tol):
-            k += 1
+        while (abs(fres) >= tol):
             if k>nmax: 
+                #print(res)
                 raise ValueError("Too many iteration in bisection root finder")
-
-            dx = abs(b-a)
+            
             res = a + 0.5 * dx
             fres = func(res, *arg)
 
@@ -252,24 +293,39 @@ elif test_numb == 7: #doesnt work
                 b = res
                 fb = fres
             else :
-                a = fres
+                a = res
                 fa = fres
-        print(fres)
+            k += 1
+            dx = abs(b-a)
+        
+        if print_stat : 
+            print("# of iteractions: ", k, "\nRoot found: ", res, "\nFunction evaluated at root value: ", fres)
+
         return res
     
 
-
-    test_func = 0
+    x_min = -4.0
+    x_max = 5.0
+    test_func = 3
     args = ()
     value = 0
-    tol = 1.0e-12
-    n_max = 1.0e8
+    tol = 1.0e-6
+    n_max = 50
 
-  
-    def myfunc(x):
-        return x
+    if test_func == 0:
+        def myfunc(x):
+            return x +1.0
+    elif test_func == 1:
+        def myfunc(x):
+            return x*x -1.0
+    elif test_func ==  2:
+        def myfunc(x):
+            return np.exp(x-1.0) - 2.0
+    elif test_func == 3:
+        def myfunc(x):
+            return np.log10(x**1.5 - x*x) + 2.0 * x
         
 
-    res = bisection(myfunc, args, x_min, x_max, tol, n_max)
+    res = bisection(myfunc, args, x_min, x_max, tol, n_max, True)
 
     print(res)
