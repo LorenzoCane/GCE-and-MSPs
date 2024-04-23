@@ -359,15 +359,15 @@ elif exercise == 6 :
     beta = 1.0
 
     #n_samples = 3
-    sample_dim = 1.0e3
+    sample_dim = 1.0e2
     n_bins = round(sample_dim**0.5)
     counter = 0
-    tol = 1.0e-10
+    tol = 1.0e-8
     n_max = 1.0e5
 
     rng = np.random.default_rng()
 
-    test_func = 1
+    test_func = 0
     def myfunc(x):
         if test_func == 0: 
             #log parabola
@@ -384,7 +384,7 @@ elif exercise == 6 :
     arg = (myfunc, arg1, x_min)
 
     def accum_func(a, func, arg, min):
-        acc = integrate.quad(func, min, a, arg, epsabs=0.0, epsrel=1.0e-12)[0]
+        acc = integrate.quad(func, min, a, arg, epsabs=0.0, epsrel=1.0e-13)[0]
         return acc
     
     def func_shifter(x, func, args, value):

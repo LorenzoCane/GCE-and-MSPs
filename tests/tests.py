@@ -210,7 +210,7 @@ elif test_numb == 6 :
         elif fb == 0.0 : res = b
 
         else:
-            while (abs(fb) >= tol):
+            while (abs(dx) >= tol):
                 k += 1
 
                 if k > n_max:
