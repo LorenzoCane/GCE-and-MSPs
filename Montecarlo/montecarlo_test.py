@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.special import erf
 from scipy.optimize import fsolve
+from scipy.interpolate import interp1d
 import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
@@ -14,7 +15,7 @@ from tools import bounded_norm_distr, bisection, newton_root_finder
 start_time = time.monotonic()
 
 
-exercise = 6  #to execute only one exercise at time
+exercise = 7  #to execute only one exercise at time
 
 #**************************************************************
 #plotting config
@@ -345,7 +346,7 @@ elif exercise == 5 :
     plt.savefig(os.path.join("inv_func_sample(fsolve).png"))
 
 #**************************************************************
-#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using custom root finders)
+#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using custom root finders) (not working)
 elif exercise == 6 :
     x_min = -1.0
     x_max = 1.0
@@ -447,6 +448,91 @@ elif exercise == 6 :
     plt.legend()
     plt.savefig(os.path.join("inv_func_sample(custom).png"))
 
+#**************************************************************
+#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using custom root finders)
+elif exercise == 7 :
+    x_min = 1.0e30
+    x_max = 1.0e37
+    draw = np.linspace(x_min, x_max, 10000)
+    fig, ax = plt.subplots()
+
+
+    sample_dim = 1.0e4
+    n_bins = round(sample_dim**0.5)
+    bin_dim = (x_max - x_min) / n_bins
+
+    k = 1.0
+    alpha = -2.0
+    beta = 1.0
+    arg = ()
+
+    test_func = 3
+    if test_func == 0: 
+        def myfunc(x):
+            #log parabola
+            a = alpha - beta * np.log10(x+2.0)
+            return (k * (x+2.0)**a) 
+    elif test_func == 1:
+        def myfunc(x):
+            #abs func (cusp)
+            return (-abs(x) + 2.0) 
+    elif test_func == 2:
+        def myfunc(x):
+
+            return (-x+2.0)
+    elif test_func == 3:
+        arg = (1.0, 1.0e33, 0.97, 2.6)
+        ax.set_xlim(x_min,x_max)
+        def myfunc(x, norm, x_b, n1, n2):   #broken power law function  (be carefull about exponential renorm)  
+            def part(a) :
+                return a / x_b
+            frac = part(x)
+            if  frac < 1:
+                frac = frac**(-n1)
+            else:
+                frac = frac**(-n2)
+        
+            return (norm *frac)
+#--------------------------
+
+    cum_points = np.linspace(x_min, x_max, n_bins)    #points where to evaluate cum funct
+    norm = integrate.quad(myfunc, x_min, x_max, arg, epsabs= abs_err, epsrel=rel_err)[0]
+
+    cum_values = np.zeros(len(cum_points))
+    for i in range(len(cum_points)):
+        integral = integrate.quad(myfunc, x_min, cum_points[i], arg, epsabs= abs_err, epsrel=rel_err)[0]
+        cum_values[i] = integral / norm 
+
+    #rng = np.random.default_rng()
+    #u = rng.random(sample_dim)
+    u = np.random.random_sample(int(sample_dim))
+
+    x = np.zeros(int(sample_dim))
+    y_n = np.zeros(n_bins)
+    for i in range(0 , int(sample_dim)):
+        step = 0
+        while (cum_values[step] < u[i]):
+            step += 1
+            
+        x[i] = cum_values[step]
+        y_n[step] +=1
+
+
+
+
+    vector_func = np.vectorize(myfunc)
+    y_draw = vector_func(draw, *arg)
+    ax.loglog(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+    y_err = y_n ** 0.5
+    #count, bins, ignored = ax.hist(x, n_bins, density=True)
+    ax.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+
+
+
+
+
+    plt.legend()
+    plt.savefig(os.path.join("inv_func_sample(cumulative).png"))
 
 end_time = time.monotonic()
 print("Execution time: " , timedelta(seconds= end_time - start_time))
