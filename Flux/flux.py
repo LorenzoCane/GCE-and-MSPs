@@ -10,7 +10,7 @@ from iminuit.cost import LeastSquares
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
 from tools import cmtokpc, log_scale_int, GeVtoerg
-from gce import gNRW2, broken_pl_arr, broken_pl
+from gce import  broken_pl_arr, broken_pl
 #from jacobi import propagate
 import os
 
@@ -83,7 +83,7 @@ m.values[2], m.values[3] = m.values[2]-2 , m.values[3]-2  #go back to fit values
 #y, ycov = propagate(lambda norm, xb, n1, n2: broken_pl(d.emeans, norm, xb, n1, n2)[1], m.values, m.covariance)
 #****************************************************************
 #Calculation of the total flux
-I = log_scale_int(broken_pl, e_min, e_max, inf_approx, tuple(m.values), abs_err, rel_err, div_numb)
+I = log_scale_int(broken_pl, e_min, e_max, tuple(m.values),inf_approx, abs_err, rel_err, div_numb)
 #I = integrate.quad(broken_pl, e_min, e_max, args=tuple(m.values), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 #print(I[0], "  ", I[1])
 f.write('--------------------------------------------------------\n\n')

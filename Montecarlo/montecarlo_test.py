@@ -11,11 +11,11 @@ from scipy.interpolate import interp1d
 import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
-from tools import bounded_norm_distr, bisection, newton_root_finder
+from tools import bounded_norm_distr, bisection, newton_root_finder, log_scale_int, accum_func, func_shifter, func_norm, gaussian
 start_time = time.monotonic()
 
 
-exercise = 7  #to execute only one exercise at time
+exercise = 3  #to execute only one exercise at time
 
 #**************************************************************
 #plotting config
@@ -27,7 +27,8 @@ func_color = 'black'
 #integral config
 abs_err = 0.0
 rel_err = 1.0e-6
-inf_approx = 1.0e20
+inf_approx = 1.0e40
+
 
 #**************************************************************
 #42.4.1 Exponential decay
@@ -93,38 +94,24 @@ elif exercise == 3 :
  #RAM parameters
     rng = np.random.default_rng()
 
-    x_min = -1.0                            #interval of integration  
+    x_min = -1.0                            #interval of interest
     x_max = 1.0
     draw = np.linspace(x_min, x_max, 10000)
 
     sample_dim = 1.0e2                      #number of points in the sample
     n_bins = round(sample_dim**0.5)         #numbers of bins for scatter/hist plot
     M = 20.0                                # Parameter of selection (must be as small as possible) 
- 
+  #-----------------------------------------------
  #Gaussian distr parameters   
     sigma = 1.0 
     mu = 0.0
-
- #f(x) parameters
+ #-----------------------------------------------
+ #f(x) parameters and definition
     k = 1.0       
     alpha = -2.0
     beta = 1.0
 
     arg = ()  
-    
- #-----------------------------------------------
-    #Functions definition
-
-    def func_norm(x, func, arg, x_min, x_max, normal):
-        #takes a function "func" with arguments "arg" and normalize it to "normal" on the range (x_min; x_max)
-        i =  integrate.quad(func,x_min, x_max, arg, epsabs=abs_err, epsrel=rel_err)[0]
-        return func(x, *arg) / i * normal
-    
-    def gaussian(x , x0, sigma, x_min, x_max):
-        #Gauss distribution function with  peak at x0 and width sigma. Normalized on the range (x_min; x_max)
-        norm1 = 1.0 / sigma / (2.0 * np.pi)**0.5
-        norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
-        return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
     
     test_func = 1                   #use this to move between test functions f(x)         
 
@@ -141,12 +128,13 @@ elif exercise == 3 :
             return -x+2.0
         
     #print(integrate.quad(func_norm,x_min, x_max, (myfunc, arg, x_min, x_max, sample_dim), epsabs=abs_err, epsrel=rel_err)[0])               
+ #-----------------------------------------------
 
     temp = []
 
     counter = 0                     #counter of successfully selected points 
     iter = 0                        #iterations need to collect the desired number of accepted points
-    while counter < sample_dim:
+    while counter < sample_dim:     #algorithm implementation
 
         y = bounded_norm_distr(mu, sigma, x_min, x_max)         
         #y = normal_distr(mu, sigma)
@@ -168,13 +156,13 @@ elif exercise == 3 :
     y_n, bin_edges = np.histogram(x, n_bins, density = False)
     bin_means = np.zeros(len(bin_edges)-1)
     for n in range(0 , len(bin_edges)-1):
-        bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5 
+        bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5       #mid point of bins
     
-    bin_dim = np.diff(bin_edges)[0]
+    bin_dim = np.diff(bin_edges)[0]                                #bins width
 
 
     #print(np.sum(y_n/sample_dim))
-    y_err = (y_n)**0.5
+    y_err = (y_n)**0.5                                              #error on counts
     #ax.plot (draw, gaussian(draw, mu, sigma))
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
     #ax.scatter(bin_means, y_n, marker = marker_st, color = marker_color)
@@ -272,23 +260,27 @@ elif exercise == 4 :
 #**************************************************************
 #INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using fsolve)
 elif exercise == 5 :
-    x_min = -1.0
+    x_min = -1.0                            #interval of interest
     x_max = 1.0
-    mid = (x_max + x_min)/2.0
+    mid = (x_max + x_min)/2.0               #middle point can be use as first extimator
     draw = np.linspace(x_min, x_max, 10000)
- 
+  #-----------------------------------------------
+ #f(x) parameters
     k = 1.0
     alpha = -2.0
     beta = 1.0
+ #-----------------------------------------------
 
-    #n_samples = 3
-    sample_dim = 1.0e3
-    n_bins = round(sample_dim**0.5)
-    counter = 0
-    tol = 1.0e-10
+    #n_samples = 3                          
+    sample_dim = 1.0e3                      #sample dimension
+    n_bins = round(sample_dim**0.5)         #number of bins involved
+    counter = 0                             # numb of success
+    tol = 1.0e-10                           #desired tollerance (must be compatible with rel err of integrals)
 
-    rng = np.random.default_rng()
+    rng = np.random.default_rng()           #random seed
 
+ #-----------------------------------------------
+    #Functions definition
     test_func = 2
     def myfunc(x):
         if test_func == 0: 
@@ -301,46 +293,38 @@ elif exercise == 5 :
         elif test_func == 2:
             return (-x+2.0)*0.25
 
+ #-----------------------------------------------
+    #plot and function arguments
     fig, ax = plt.subplots()
     arg1 = ()
     arg = (myfunc, arg1, x_min)
-
-    def accum_func(a, func, arg, min):
-        acc = integrate.quad(func, min, a, arg, epsabs=0.0, epsrel=1.0e-12)[0]
-        return acc
-    
-    def func_shifter(x, func, args, value):
-        shifted = func(x, *args) - value
-        return shifted
-    
+ #-----------------------------------------------
+ 
     temp = []
-    while counter < sample_dim:
+    while counter < sample_dim:     #algorithm implementation
         u = rng.random()
         
-        zeros = fsolve(func_shifter, mid, (accum_func, arg, u), xtol= tol)
+        zeros = fsolve(func_shifter, mid, (accum_func, arg, u), xtol= tol) #use of fsolve !TAKE CARE OF EXTIMATOR!  
         y = zeros
         temp.append(y)
         counter +=1
 
     x = np.array(temp)
 
-    
+ #-----------------------------------------------
+    #scatter/hist plot
     y_n, bin_edges = np.histogram(x, n_bins, density = False)
     bin_means = np.zeros(len(bin_edges)-1)
     for n in range(0 , len(bin_edges)-1):
-        bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5 
+        bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5     #mid point of my bins  
     
-    bin_dim = np.diff(bin_edges)[0]
+    bin_dim = np.diff(bin_edges)[0]                              #bins width
 
-    y_err = (y_n)**0.5
+    y_err = (y_n)**0.5                                          #error on counts
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
     ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
     
     ax.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
-
-
-
-
 
     plt.legend()
     plt.savefig(os.path.join("inv_func_sample(fsolve).png"))
@@ -449,24 +433,27 @@ elif exercise == 6 :
     plt.savefig(os.path.join("inv_func_sample(custom).png"))
 
 #**************************************************************
-#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using custom root finders)
+#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using cumulative func method)
 elif exercise == 7 :
-    x_min = 1.0e30
-    x_max = 1.0e37
+    x_min = -1.0                    #interval of interest
+    x_max = 1.0
+ #drawing and plot
     draw = np.linspace(x_min, x_max, 10000)
     fig, ax = plt.subplots()
 
+ #-----------------------------------------------
+    sample_dim = 1.0e3                      #sample dimension
+    n_bins = round(sample_dim**0.5)         #number of bins
+    bin_dim = (x_max - x_min) / n_bins      #bins width
 
-    sample_dim = 1.0e4
-    n_bins = round(sample_dim**0.5)
-    bin_dim = (x_max - x_min) / n_bins
-
+ #-----------------------------------------------
+ #f(x) parameters and definition
     k = 1.0
     alpha = -2.0
     beta = 1.0
     arg = ()
 
-    test_func = 3
+    test_func = 0
     if test_func == 0: 
         def myfunc(x):
             #log parabola
@@ -480,28 +467,98 @@ elif exercise == 7 :
         def myfunc(x):
 
             return (-x+2.0)
-    elif test_func == 3:
-        arg = (1.0, 1.0e33, 0.97, 2.6)
-        ax.set_xlim(x_min,x_max)
+ #-----------------------------------------------
+
+    cum_points = np.linspace(x_min, x_max, n_bins)    #points where to evaluate cum funct
+    norm = integrate.quad(myfunc, x_min, x_max, arg, epsabs= abs_err, epsrel=rel_err)[0] #normalization to unit
+
+    cum_values = np.zeros(len(cum_points))      
+    for i in range(len(cum_points)):                   #evaluation of cumulative function in the selected points
+        integral = integrate.quad(myfunc, x_min, cum_points[i], arg, epsabs= abs_err, epsrel=rel_err)[0]
+        cum_values[i] = integral / norm #normalized
+
+    #rng = np.random.default_rng()
+    #u = rng.random(sample_dim)
+    u = np.random.random_sample(int(sample_dim))
+
+    x = np.zeros(int(sample_dim))
+    y_n = np.zeros(n_bins)              #count how many cases are in a bin
+    for i in range(0 , int(sample_dim)):
+        step = 0
+        while (cum_values[step] < u[i]):
+            step += 1
+            
+        x[i] = cum_values[step]
+        y_n[step] +=1
+
+ #-----------------------------------------------
+    #plot
+    vector_func = np.vectorize(myfunc)
+    y_draw = vector_func(draw, *arg)
+    ax.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+
+    y_err = y_n ** 0.5
+    #count, bins, ignored = ax.hist(x, n_bins, density=True)
+    ax.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+
+    plt.legend()
+    plt.savefig(os.path.join("inv_func_sample(cumulative).png"))
+
+#**************************************************************
+#INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (cum func method on lum func)
+elif exercise == 8 :
+    x_min = 1.0e29              #interval of interest
+    x_max = 1.0e38
+ #-----------------------------------------------
+    #drawing instructions
+    draw = np.geomspace(x_min, x_max, 10000)
+    draw_min = 1.0e29
+    draw_max = 1.0e38
+    fig, ax = plt.subplots()
+    ax.set_xlim(draw_min, draw_max)
+    #plt.ylim(1.0e-45 , 1.2e-27)
+
+ #-----------------------------------------------
+    sample_dim = 1.0e2              
+    n_bins = round(sample_dim**0.5)
+
+
+    test_func = 0
+    if test_func == 0: 
+        arg = (1.0, 1.0e33, 0.97, 2.6)      #disk data for ex
         def myfunc(x, norm, x_b, n1, n2):   #broken power law function  (be carefull about exponential renorm)  
-            def part(a) :
-                return a / x_b
-            frac = part(x)
+            frac = x / x_b
             if  frac < 1:
                 frac = frac**(-n1)
             else:
                 frac = frac**(-n2)
         
             return (norm *frac)
-#--------------------------
+    elif test_func == 1:
+        arg = (1.0, 2.5e34, -0.66, 18.2)      #disk data for ex
+        def myfunc(x, norm, x_b, n1, n2):   #broken power law function  (be carefull about exponential renorm)  
+            frac = x / x_b
+            if  frac < 1:
+                frac = frac**(-n1)
+            else:
+                frac = frac**(-n2)
+        
+            return (norm *frac)
 
-    cum_points = np.linspace(x_min, x_max, n_bins)    #points where to evaluate cum funct
-    norm = integrate.quad(myfunc, x_min, x_max, arg, epsabs= abs_err, epsrel=rel_err)[0]
+ #--------------------------
+
+    cum_points = np.geomspace(x_min, x_max, n_bins)    #points where to evaluate cum funct
+    norm = log_scale_int(myfunc, x_min, x_max, arg)[0]
+    
+    bin_dim = np.ones(n_bins)
+    for i in range(1, len(cum_points)):
+        bin_dim[i] = cum_points[i] - cum_points[i-1]
 
     cum_values = np.zeros(len(cum_points))
     for i in range(len(cum_points)):
-        integral = integrate.quad(myfunc, x_min, cum_points[i], arg, epsabs= abs_err, epsrel=rel_err)[0]
-        cum_values[i] = integral / norm 
+        integral = log_scale_int(myfunc, x_min, cum_points[i],arg)
+        cum_values[i] = integral[0] / norm 
+
 
     #rng = np.random.default_rng()
     #u = rng.random(sample_dim)
@@ -517,22 +574,19 @@ elif exercise == 7 :
         x[i] = cum_values[step]
         y_n[step] +=1
 
-
-
-
+ #-----------------------------------------------
+    #plot
     vector_func = np.vectorize(myfunc)
     y_draw = vector_func(draw, *arg)
-    ax.loglog(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+   
+    ax.loglog(draw, y_draw/norm, color = "black", label = "function f(x)")
+
     y_err = y_n ** 0.5
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
-
-
-
-
+    ax.errorbar(cum_points[1:], y_n[1:]*(1.0/bin_dim[1:])/sample_dim, yerr = y_err[1:]*(1.0/bin_dim[1:])/sample_dim, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
 
     plt.legend()
-    plt.savefig(os.path.join("inv_func_sample(cumulative).png"))
+    plt.savefig(os.path.join("inv_func_sample_lum_func.png"))
 
 end_time = time.monotonic()
 print("Execution time: " , timedelta(seconds= end_time - start_time))

@@ -2,13 +2,14 @@
 
 import numpy as np
 import scipy.integrate as integrate
+from scipy.special import erf
 #from scipy.special import gammaincc,gamma, exp1
 #import os
 
 #*************************************************************
 # Root finders
 
-def bisection(func, arg, a, b, tol, nmax, print_stat = False):
+def bisection(func, arg, a, b, tol= 1.0e8, nmax=1.0e4, print_stat = False):
     dx = abs(b-a)
     res = a + 0.5 * dx
     k = 0
@@ -43,7 +44,7 @@ def bisection(func, arg, a, b, tol, nmax, print_stat = False):
 
     return res
 #-------------------------------------------------------
-def newton_root_finder(func, func_prime, arg, arg_prime, a, c, tol, n_max, print_stat = False ):
+def newton_root_finder(func, func_prime, arg, arg_prime, a, c, tol=1.0e8, n_max=1.0e4, print_stat = False ):
     b = a + abs(c-a)
     fa = func(a, *arg)
     fb = func(b, *arg)
@@ -76,6 +77,27 @@ def newton_root_finder(func, func_prime, arg, arg_prime, a, c, tol, n_max, print
             print("# of iteractions: ", k, "\nRoot found: ", res, "\nFunction evaluated at root value: ", fres)
 
         return res
+    
+#*************************************************************
+#Function modifications
+
+def func_norm(x, func, arg, x_min, x_max, normal, abs_err =0.0, rel_err=1.0e8):
+    #takes a function "func" with arguments "arg" and normalize it to "normal" on the range (x_min; x_max)
+    # options for integration procedure are pre-selected but can be modified
+    i =  integrate.quad(func,x_min, x_max, arg, epsabs=abs_err, epsrel=rel_err)[0]
+    return func(x, *arg) / i * normal
+#-------------------------------------------------------
+   
+def accum_func(a, func, arg, min):
+    #evaluate the accumulation function of a function func from min to a, Use arg for add argument of the function
+    acc = integrate.quad(func, min, a, arg, epsabs=0.0, epsrel=1.0e-12)[0]
+    return acc
+#-------------------------------------------------------
+  
+def func_shifter(x, func, args, value):
+    #Take a function func (with arguments args) and shifted it by value
+    shifted = func(x, *args) - value
+    return shifted
 
 #*************************************************************
 #Conversion between units
@@ -97,11 +119,11 @@ def kpctocm(x):
 #*************************************************************
 #Log-scale conversion and integration
 
-def log_range_conv(x1, x2, inf_approx):
+def log_range_conv(x1, x2, inf_approx = 1.0e50):
     #transform the limits of an integral into the log-scale int. limits
     # x1 : lower limit ; x2 : upper limit
     # it returns the new limits in an array
-    #!!! FOR +INF LIMIT AN APPROX. inf_approx MUST BE SELECTED
+    #infinity approx is selected but can be changed
     if x1 != np.infty and x1 != 0:  y1 = np.log10(x1)
     elif x1 == 0 : y1 = - np.infty
     elif x1 == np.infty : y1 = np.log10(inf_approx)
@@ -119,9 +141,10 @@ def integrand_log(y, func, arg):
     return np.log(10) * 10**y * func(10**y, *arg)
 #-------------------------------------------------------
 
-def log_scale_int(func, x_min, x_max, inf_approx, arg, abs_err, rel_err, div_numb):
+def log_scale_int(func, x_min, x_max,arg, inf_approx=1.0e50, abs_err = 0.0, rel_err = 1.0e-8, div_numb = 50):
     #perform the log-scaled integral of a funcion func 
     #x1, x2: original integrational limits; inf_approx: infinit approx; arg: argument of func; other parameters used as in quad
+    # options for integration procedure are pre-selected but can be modified
     y_lim = log_range_conv(x_min, x_max, inf_approx)
     y1 = y_lim[0]
     y2 = y_lim[1]
@@ -131,24 +154,31 @@ def log_scale_int(func, x_min, x_max, inf_approx, arg, abs_err, rel_err, div_num
     return res
 
 #*************************************************************
-
 #Mathematical functions
 
-def mygamma_inc(s,x, inf_approx, abs_err, rel_err, div_numb):
+def mygamma_inc(s,x, inf_approx=1.0e50, abs_err=0.0, rel_err=1.0e-8, div_numb=50):
     #gamma incomplete calculation of s with lower limit x
-    #inf approx: infinity approx desired; other parameters used as in quad
+    # options for integration procedure are pre-selected but can be modified
     def integr(t, s):
         return t**(s-1) * np.exp(-t)
     arg = (s,)
-    I = log_scale_int(integr, x, np.infty, inf_approx, arg, abs_err, rel_err, div_numb)
+    I = log_scale_int(integr, x, np.infty, arg, inf_approx, abs_err, rel_err, div_numb)
     #I = integrate.quad(integr, x , 1.0e70, args=(s), epsabs=abs_err, epsrel=rel_err, limit=div_numb)
     return I[0]
+#-------------------------------------------------------
 
+def gaussian(x , x0, sigma, x_min, x_max):
+    #Gauss distribution function with  peak at x0 and width sigma. Normalized on the range (x_min; x_max)
+    norm1 = 1.0 / sigma / (2.0 * np.pi)**0.5
+    norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
+    return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
 #*************************************************************
 
 #Random distribution algorithms
 
-def normal_distr(mu, sigma):
+def normal_distr(mu=0.0, sigma=1.0):
+    #generate a number according to the normal distribution density
+    # if not specifid mu and sigma are pre-selected as 0.0 and 1.0
     rng = np.random.default_rng()
     u1 = rng.random()
     u2 = rng.random()
@@ -156,7 +186,6 @@ def normal_distr(mu, sigma):
     y = sigma * (np.sin(2.0*np.pi*u1) * (-2.0 * np.log(u2))**0.5) + mu
 
     return y
-
 #-------------------------------------------------------
 
 def bounded_norm_distr(mu, sigma, x_min, x_max):

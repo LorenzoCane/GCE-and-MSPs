@@ -10,7 +10,7 @@ import scipy.integrate as integrate
 import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
-from gce import gNRW2, sgNRW, power_law, log_norm, broken_pl_arr, broken_pl, l_log, l_bpl
+from gce import gNRW2, sgNRW, power_law, log_norm, broken_pl, l_log, l_bpl
 from tools import cmtokpc, log_scale_int, mygamma_inc
 
 #****************************************************************************
@@ -21,6 +21,7 @@ f = open('lum_func.txt', 'w')      #output file
 f.write('luminosity_func.py results \n')
 f.write('************************************************* \n \n')
 
+broken_pl_arr = np.vectorize(broken_pl)
 #luminosity values
 min = 1.0e29       #erg s^(-1)     #luminosity min 
 max = 1.0e38       #erg s^(-1)     #luminosity max
@@ -187,8 +188,8 @@ p_nptf = broken_pl_arr(l, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
 
 int_max =3.2e35 #int upper bound as found before
 arg=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
-d = log_scale_int(l_bpl, min, int_max, 1.0e50, arg, abs_err, rel_err, div_numb)
-n = log_scale_int(broken_pl, l_th, int_max, 1.0e50, arg, abs_err, rel_err, div_numb)
+d = log_scale_int(l_bpl, min, int_max, arg, 1.0e50, abs_err, rel_err, div_numb)
+n = log_scale_int(broken_pl, l_th, int_max, arg, 1.0e50, abs_err, rel_err, div_numb)
 #d = integrate.quad(l_bpl, min, int_max, args=(norm_nptf, l_b_nptf, n1_nptf, n2_nptf), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 #n = integrate.quad(broken_pl, l_th, int_max, args=arg, epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 #print(d[0], "  ", d[1])
@@ -209,7 +210,7 @@ l_m_disk = 1.0e30
 l_M_disk = 1.0e37
 a = (n1_disk - n2_disk) - (1-n2_disk)*(l_m_disk/l_b_disk)**(1-n1_disk)+ (1-n1_disk)*(l_M_disk/l_b_disk)**(1-n2_disk)
 norm_disk = (1-n1_disk)*(1-n2_disk) / l_b_disk / (n1_disk - n2_disk)
-p_disk = []
+
 
 p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 
@@ -217,8 +218,8 @@ p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 norm_disk_lim = (1-n1_disk)*(1-n2_disk) / l_b_disk / a
 
 arg=(norm_disk_lim, l_b_disk, n1_disk, n2_disk)
-d = log_scale_int(l_bpl, l_m_disk, max, 1.0e50, arg, abs_err, rel_err, div_numb)
-n = log_scale_int(broken_pl, l_th, max, 1.0e50, arg, abs_err, rel_err, div_numb)
+d = log_scale_int(l_bpl, l_m_disk, max, arg,  1.0e50,abs_err, rel_err, div_numb)
+n = log_scale_int(broken_pl, l_th, max, arg, 1.0e50, abs_err, rel_err, div_numb)
 #d = integrate.quad(l_bpl, l_m_disk, l_M_disk, args=(norm_disk_lim, l_b_disk, n1_disk, n2_disk), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 #n = integrate.quad(broken_pl, l_th, l_M_disk, args=(norm_disk_lim, l_b_disk, n1_disk, n2_disk), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
 #print(n[0], "  ", n[1])
