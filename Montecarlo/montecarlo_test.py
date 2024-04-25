@@ -15,7 +15,7 @@ from tools import bounded_norm_distr, bisection, newton_root_finder, log_scale_i
 start_time = time.monotonic()
 
 
-exercise = 3  #to execute only one exercise at time
+exercise = 5  #to execute only one exercise at time
 
 #**************************************************************
 #plotting config
@@ -304,7 +304,7 @@ elif exercise == 5 :
     while counter < sample_dim:     #algorithm implementation
         u = rng.random()
         
-        zeros = fsolve(func_shifter, mid, (accum_func, arg, u), xtol= tol) #use of fsolve !TAKE CARE OF EXTIMATOR!  
+        zeros = fsolve(func_shifter, x_min, (accum_func, arg, u), xtol= tol) #use of fsolve !TAKE CARE OF EXTIMATOR!  
         y = zeros
         temp.append(y)
         counter +=1
@@ -507,8 +507,8 @@ elif exercise == 7 :
 #**************************************************************
 #INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (cum func method on lum func)
 elif exercise == 8 :
-    x_min = 1.0e29              #interval of interest
-    x_max = 1.0e38
+    x_min = 1.0e30             #interval of interest
+    x_max = 1.0e3
  #-----------------------------------------------
     #drawing instructions
     draw = np.geomspace(x_min, x_max, 10000)
@@ -519,7 +519,7 @@ elif exercise == 8 :
     #plt.ylim(1.0e-45 , 1.2e-27)
 
  #-----------------------------------------------
-    sample_dim = 1.0e2              
+    sample_dim = 1.0e3              
     n_bins = round(sample_dim**0.5)
 
 
@@ -535,7 +535,7 @@ elif exercise == 8 :
         
             return (norm *frac)
     elif test_func == 1:
-        arg = (1.0, 2.5e34, -0.66, 18.2)      #disk data for ex
+        arg = (1.0, 2.5e34, -0.66, 18.2)      #NPTF data for ex
         def myfunc(x, norm, x_b, n1, n2):   #broken power law function  (be carefull about exponential renorm)  
             frac = x / x_b
             if  frac < 1:
@@ -547,17 +547,17 @@ elif exercise == 8 :
 
  #--------------------------
 
-    cum_points = np.geomspace(x_min, x_max, n_bins)    #points where to evaluate cum funct
+    cum_points = np.geomspace(x_min, x_max, n_bins)    #points where to evaluate cum funct (to be fixed)
     norm = log_scale_int(myfunc, x_min, x_max, arg)[0]
     
-    bin_dim = np.ones(n_bins)
+    bin_dim = np.ones(n_bins)                           #bins width
     for i in range(1, len(cum_points)):
         bin_dim[i] = cum_points[i] - cum_points[i-1]
 
     cum_values = np.zeros(len(cum_points))
-    for i in range(len(cum_points)):
+    for i in range(len(cum_points)):                    #evaluation of cumulative function in the selected points
         integral = log_scale_int(myfunc, x_min, cum_points[i],arg)
-        cum_values[i] = integral[0] / norm 
+        cum_values[i] = integral[0] / norm              #normalized
 
 
     #rng = np.random.default_rng()
@@ -587,6 +587,78 @@ elif exercise == 8 :
 
     plt.legend()
     plt.savefig(os.path.join("inv_func_sample_lum_func.png"))
+
+#**************************************************************
+#COMPARING (simple func and lum func)
+elif exercise == 9:
+    x_min = -1.0                    #interval of interest
+    x_max = 1.0
+ #drawing and plot
+    draw = np.linspace(x_min, x_max, 10000)
+    fig, ax = plt.subplots()
+
+ #-----------------------------------------------
+    sample_dim = 1.0e3                      #sample dimension
+    n_bins = round(sample_dim**0.5)         #number of bins
+    bin_dim = (x_max - x_min) / n_bins      #bins width
+
+ #-----------------------------------------------
+ #f(x) parameters and definition
+    k = 1.0
+    alpha = -2.0
+    beta = 1.0
+    arg = ()
+
+    test_func = 0
+    if test_func == 0: 
+        def myfunc(x):
+            #log parabola
+            a = alpha - beta * np.log10(x+2.0)
+            return (k * (x+2.0)**a) 
+    elif test_func == 1:
+        def myfunc(x):
+            #abs func (cusp)
+            return (-abs(x) + 2.0) 
+    elif test_func == 2:
+        def myfunc(x):
+
+            return (-x+2.0)
+ #-----------------------------------------------
+
+    cum_points = np.linspace(x_min, x_max, n_bins)    #points where to evaluate cum funct
+    norm = integrate.quad(myfunc, x_min, x_max, arg, epsabs= abs_err, epsrel=rel_err)[0] #normalization to unit
+
+    cum_values = np.zeros(len(cum_points))      
+    for i in range(len(cum_points)):                   #evaluation of cumulative function in the selected points
+        integral = integrate.quad(myfunc, x_min, cum_points[i], arg, epsabs= abs_err, epsrel=rel_err)[0]
+        cum_values[i] = integral / norm #normalized
+
+    #rng = np.random.default_rng()
+    #u = rng.random(sample_dim)
+    u = np.random.random_sample(int(sample_dim))
+
+    x = np.zeros(int(sample_dim))
+    y_n = np.zeros(n_bins)              #count how many cases are in a bin
+    for i in range(0 , int(sample_dim)):
+        step = 0
+        while (cum_values[step] < u[i]):
+            step += 1
+            
+        x[i] = cum_values[step]
+        y_n[step] +=1
+
+ #-----------------------------------------------
+    #plot
+    vector_func = np.vectorize(myfunc)
+    y_draw = vector_func(draw, *arg)
+    ax.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+
+    y_err = y_n ** 0.5
+    #count, bins, ignored = ax.hist(x, n_bins, density=True)
+    ax.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+
+    plt.legend()
+    plt.savefig(os.path.join("inv_func_sample(cumulative).png"))
 
 end_time = time.monotonic()
 print("Execution time: " , timedelta(seconds= end_time - start_time))

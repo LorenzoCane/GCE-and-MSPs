@@ -10,6 +10,10 @@ from scipy.special import erf
 # Root finders
 
 def bisection(func, arg, a, b, tol= 1.0e8, nmax=1.0e4, print_stat = False):
+    #bisection method root finder.
+    #Search a root (in the interval [a, b])  of a function func with arguments arg. 
+    #Tolerance and number of maximum interations are pre-selected.
+    #print_stat: if true print the # of iter, root value computed and function evaluated in that point
     dx = abs(b-a)
     res = a + 0.5 * dx
     k = 0
@@ -45,6 +49,12 @@ def bisection(func, arg, a, b, tol= 1.0e8, nmax=1.0e4, print_stat = False):
     return res
 #-------------------------------------------------------
 def newton_root_finder(func, func_prime, arg, arg_prime, a, c, tol=1.0e8, n_max=1.0e4, print_stat = False ):
+    #Newtonmethod root finder.
+    #Search a root (in the interval [a, b])  of a function func with arguments arg.
+    #!PRIME DERIVATIVE (func_prime) AND ITS ARGUMENTS (arg_prime) MUST BE PROVIDDED
+    #Tolerance and number of maximum interations are pre-selected.
+    #print_stat: if true print the # of iter, root value computed and function evaluated in that point
+   
     b = a + abs(c-a)
     fa = func(a, *arg)
     fb = func(b, *arg)
