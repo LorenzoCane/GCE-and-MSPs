@@ -91,20 +91,20 @@ def newton_root_finder(func, func_prime, arg, arg_prime, a, c, tol=1.0e8, n_max=
 #*************************************************************
 #Function modifications
 
-def func_norm(x, func, arg, x_min, x_max, normal, abs_err =0.0, rel_err=1.0e8):
+def func_norm(x, func, x_min, x_max, normal=1.0, arg=(), abs_err =0.0, rel_err=1.0e8):
     #takes a function "func" with arguments "arg" and normalize it to "normal" on the range (x_min; x_max)
-    # options for integration procedure are pre-selected but can be modified
+    # options for integration procedure are pre-seleceed but can be modified
     i =  integrate.quad(func,x_min, x_max, arg, epsabs=abs_err, epsrel=rel_err)[0]
     return func(x, *arg) / i * normal
 #-------------------------------------------------------
    
-def accum_func(a, func, arg, min):
+def accum_func(a, func, min, arg = ()):
     #evaluate the accumulation function of a function func from min to a, Use arg for add argument of the function
     acc = integrate.quad(func, min, a, arg, epsabs=0.0, epsrel=1.0e-12)[0]
     return acc
 #-------------------------------------------------------
   
-def func_shifter(x, func, args, value):
+def func_shifter(x, func, value, args= ()):
     #Take a function func (with arguments args) and shifted it by value
     shifted = func(x, *args) - value
     return shifted
@@ -145,7 +145,7 @@ def log_range_conv(x1, x2, inf_approx = 1.0e50):
     return [y1, y2]
 #-------------------------------------------------------
 
-def integrand_log(y, func, arg):
+def integrand_log(y, func, arg=()):
     #tranf a integrand into its log scaled form
     #y: variable of the func; func: func of which tha log scaling is desired; arg: arguments of func
     return np.log(10) * 10**y * func(10**y, *arg)
