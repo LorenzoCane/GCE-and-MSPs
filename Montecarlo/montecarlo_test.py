@@ -15,7 +15,7 @@ from tools import bounded_norm_distr, bisection, newton_root_finder, log_scale_i
 start_time = time.monotonic()
 
 
-exercise = 9      #to execute only one exercise at time
+exercise = 7      #to execute only one exercise at time
 
 #**************************************************************
 #plotting config
@@ -26,7 +26,7 @@ func_color = 'black'
 #-----------------------------------------------
 #integral config
 abs_err = 0.0
-rel_err = 1.0e-6
+rel_err = 1.0e-10
 inf_approx = 1.0e40
 
 
@@ -100,8 +100,10 @@ elif exercise == 3 :
 
     sample_dim = 1.0e2                      #number of points in the sample
     n_bins = round(sample_dim**0.5)         #numbers of bins for scatter/hist plot
-    M = 20.0                                # Parameter of selection (must be as small as possible) 
+    M = 5.0                               # Parameter of selection (must be as small as possible) 
     rng = np.random.default_rng()
+
+    comparison = True                       #If True generates different M comparison instead of simple plot
  #-----------------------------------------------
  #Gaussian distr parameters   
     sigma = 1.0 
@@ -128,7 +130,7 @@ elif exercise == 3 :
         
     #print(integrate.quad(func_norm,x_min, x_max, (myfunc, arg, x_min, x_max, sample_dim), epsabs=abs_err, epsrel=rel_err)[0])               
  #-----------------------------------------------
-
+ #Evaluation
     temp = []
 
     counter = 0                     #counter of successfully selected points 
@@ -149,30 +151,84 @@ elif exercise == 3 :
     print("Iterations needed: ", iter)
 
  #---------------------------------------------------------------------------------------------
- #plot
-    fig, ax = plt.subplots()
+  # Single plot
+    if not comparison:
+        fig, ax = plt.subplots()
 
-    y_n, bin_edges = np.histogram(x, n_bins, density = False)
-    bin_means = np.zeros(len(bin_edges)-1)
-    for n in range(0 , len(bin_edges)-1):
-        bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5       #mid point of bins
+        y_n, bin_edges = np.histogram(x, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5       #mid point of bins
     
-    bin_dim = np.diff(bin_edges)[0]                                #bins width
+        bin_dim = np.diff(bin_edges)[0]                                #bins width
 
 
-    #print(np.sum(y_n/sample_dim))
-    y_err = (y_n)**0.5                                              #error on counts
-    #ax.plot (draw, gaussian(draw, mu, sigma))
-    #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    #ax.scatter(bin_means, y_n, marker = marker_st, color = marker_color)
-    ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Rej-Acc method)')
-    ax.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
-    #ax.plot(draw, myfunc(draw) /i , color = "black", label = "function f(x)")
+        #print(np.sum(y_n/sample_dim))
+        y_err = (y_n)**0.5                                              #error on counts
+        #ax.plot (draw, gaussian(draw, mu, sigma))
+        #count, bins, ignored = ax.hist(x, n_bins, density=True)
+        #ax.scatter(bin_means, y_n, marker = marker_st, color = marker_color)
+        ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Rej-Acc method)')
+        ax.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
+        #ax.plot(draw, myfunc(draw) /i , color = "black", label = "function f(x)")
+
+        plt.legend()
+        plt.savefig(os.path.join("RAM_function_sample.png"))
+
+ #Comparison plot (works better with abs value function an initial cond 1<M<10)
+    else:
+        fig, (ax1, ax2) = plt.subplots(2)
+
+        y_n, bin_edges = np.histogram(x, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5       #mid point of bins
+    
+        bin_dim = np.diff(bin_edges)[0]                                #bins width
 
 
+        y_err = (y_n)**0.5                                              #error on counts
+        ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Rej-Acc method)')
+        ax1.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
+        title = "Rejection method (M = " + str(M) + ")"
+        ax1.set_title(title)
+        plt.legend()
 
-    plt.legend()
-    plt.savefig(os.path.join("RAM_function_sample.png"))
+        temp = []
+        counter = 0                     #counter of successfully selected points 
+        iter = 0                        #iterations need to collect the desired number of accepted points
+        M *= 10.0
+        while counter < sample_dim:     #algorithm implementation
+
+            y = bounded_norm_distr(mu, sigma, x_min, x_max)         
+            #y = normal_distr(mu, sigma)
+            u = rng.random()
+
+            discr = func_norm(y, myfunc, x_min, x_max, 1.0) / M / gaussian(y, mu, sigma, x_min, x_max)
+            if u < discr : 
+                temp.append(y)
+                counter += 1
+            iter += 1 
+
+        x = np.array(temp)
+        print("Iterations needed (M x 10): ", iter)
+
+        y_n, bin_edges = np.histogram(x, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5       #mid point of bins
+    
+        bin_dim = np.diff(bin_edges)[0]                                #bins width
+
+
+        y_err = (y_n)**0.5                                              #error on counts
+        ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Rej-Acc method)')
+        ax2.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
+        title = "Rejection method (M = " + str(M) + ")"
+        ax2.set_title(title)
+
+        fig.tight_layout()
+        plt.savefig(os.path.join("RAM_diff_M.png"))
 
 #**************************************************************
 #REJECTION-ACCEPTANCE METHOD MULTIPLE-SAMPLING (not working now)
@@ -263,6 +319,8 @@ elif exercise == 5 :
     x_max = 1.0
     mid = (x_max + x_min)/2.0               #middle point can be use as first extimator
     draw = np.linspace(x_min, x_max, 10000)
+
+    guess_comp = False                       #generate plot for different guess point comparison
   #-----------------------------------------------
  #f(x) parameters
     k = 1.0
@@ -280,7 +338,7 @@ elif exercise == 5 :
 
  #-----------------------------------------------
     #Functions definition
-    test_func = 2
+    test_func = 0
     def myfunc(x):
         if test_func == 0: 
             #log parabola
@@ -294,7 +352,6 @@ elif exercise == 5 :
 
  #-----------------------------------------------
     #plot and function arguments
-    fig, ax = plt.subplots()
     arg1 = ()
     arg = (myfunc, x_min)
  #-----------------------------------------------
@@ -303,7 +360,7 @@ elif exercise == 5 :
     while counter < sample_dim:     #algorithm implementation
         u = rng.random()
         
-        zeros = fsolve(func_shifter, x_min, (accum_func,u, arg), xtol= tol) #use of fsolve !TAKE CARE OF EXTIMATOR!  
+        zeros = fsolve(func_shifter, mid, (accum_func,u, arg), xtol= tol) #use of fsolve !TAKE CARE OF GUESS!  
         y = zeros
         temp.append(y)
         counter +=1
@@ -311,22 +368,76 @@ elif exercise == 5 :
     x = np.array(temp)
 
  #-----------------------------------------------
-    #scatter/hist plot
-    y_n, bin_edges = np.histogram(x, n_bins, density = False)
-    bin_means = np.zeros(len(bin_edges)-1)
-    for n in range(0 , len(bin_edges)-1):
-        bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5     #mid point of my bins  
-    
-    bin_dim = np.diff(bin_edges)[0]                              #bins width
+ #simple scatter/hist plot
+    if not guess_comp :
+        fig, ax = plt.subplots()
 
-    y_err = (y_n)**0.5                                          #error on counts
-    #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
+        y_n, bin_edges = np.histogram(x, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5     #mid point of my bins  
     
-    ax.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
+        bin_dim = np.diff(bin_edges)[0]                              #bins width
 
-    plt.legend()
-    plt.savefig(os.path.join("inv_func_sample(fsolve).png"))
+        y_err = (y_n)**0.5                                          #error on counts
+        #count, bins, ignored = ax.hist(x, n_bins, density=True)
+        ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
+    
+        ax.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
+
+        plt.legend()
+        plt.savefig(os.path.join("inv_func_sample(fsolve).png"))
+
+ #comparison (works better with sample_dim = 100 or 1000 and log-parabola as a function)
+    else :
+        fig, (ax1, ax2) = plt.subplots(2)
+        
+        y_n, bin_edges = np.histogram(x, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5     #mid point of my bins  
+    
+        bin_dim = np.diff(bin_edges)[0]                              #bins width
+
+        y_err = (y_n)**0.5                                          #error on counts
+        #count, bins, ignored = ax.hist(x, n_bins, density=True)
+        ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
+    
+        ax1.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
+        ax1.set_title("Mid point as guess")
+
+        #re-evaluation needed
+        rng = np.random.default_rng()           #random seed
+        temp = []
+        counter = 0                             # numb of success
+   
+        while counter < sample_dim:     #algorithm implementation
+            u = rng.random()
+        
+            zeros = fsolve(func_shifter, x_min, (accum_func,u, arg), xtol= tol) #use of fsolve !TAKE CARE OF EXTIMATOR!  
+            y = zeros
+            temp.append(y)
+            counter +=1
+
+        x = np.array(temp)
+
+        y_n, bin_edges = np.histogram(x, n_bins, density = False)
+        bin_means = np.zeros(len(bin_edges)-1)
+        for n in range(0 , len(bin_edges)-1):
+            bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5     #mid point of my bins  
+    
+        bin_dim = np.diff(bin_edges)[0]                              #bins width
+
+        y_err = (y_n)**0.5                                          #error on counts
+        #count, bins, ignored = ax.hist(x, n_bins, density=True)
+        ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
+    
+        ax2.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
+        ax2.set_title("Starting point as guess")
+        
+        fig.tight_layout()
+        plt.legend()
+        plt.savefig(os.path.join("fsolve_diff_guess.png"))
 
 #**************************************************************
 #INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (using custom root finders) (not working)
@@ -431,6 +542,7 @@ elif exercise == 7 :
     draw = np.linspace(x_min, x_max, 10000)
     fig, ax = plt.subplots()
 
+    comparison =  True              #if True generated diff n_bins comparison instead of simple plot
  #-----------------------------------------------
     sample_dim = 1.0e3                      #sample dimension
     n_bins = round(sample_dim**0.5)         #number of bins
@@ -458,7 +570,8 @@ elif exercise == 7 :
 
             return (-x+2.0)
  #-----------------------------------------------
-
+    start_time = time.monotonic()
+    sample_dim = int(sample_dim)
     cum_points = np.linspace(x_min, x_max, n_bins)    #points where to evaluate cum funct
     norm = integrate.quad(myfunc, x_min, x_max, arg, epsabs= abs_err, epsrel=rel_err)[0] #normalization to unit
 
@@ -481,19 +594,72 @@ elif exercise == 7 :
         x[i] = cum_values[step]
         y_n[step] +=1
 
+    end_time = time.monotonic()
+    time1 = timedelta(seconds= end_time - start_time)
+    print("Execution time with n_bins= " , str(n_bins), " :" , time1)
  #-----------------------------------------------
-    #plot
-    vector_func = np.vectorize(myfunc)
-    y_draw = vector_func(draw, *arg)
-    ax.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+    #Single plot
+    if not comparison:
+        vector_func = np.vectorize(myfunc)
+        y_draw = vector_func(draw, *arg)
+        y_err = y_n ** 0.5
+        ax.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
 
-    y_err = y_n ** 0.5
-    #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+        #count, bins, ignored = ax.hist(x, n_bins, density=True)
+        ax.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
 
-    plt.legend()
-    plt.savefig(os.path.join("inv_func_sample(cumulative).png"))
+        plt.legend()
+        plt.savefig(os.path.join("inv_func_sample(cumulative).png"))
 
+    #comparison plot (works better with initial conditions sample_dim = 1000 and nbins = sqrt(sample_dim))
+    else :
+        fig, (ax1, ax2) = plt.subplots(2)
+        vector_func = np.vectorize(myfunc)
+        y_draw = vector_func(draw, *arg)
+        y_err = y_n ** 0.5
+        ax1.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+        ax1.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+        title = r'Rejection method with N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
+        ax1.set_title(title)
+
+        start_time = time.monotonic()
+
+        n_bins = 10         #number of bins
+        bin_dim = (x_max - x_min) / n_bins      #bins width
+
+        cum_points = np.linspace(x_min, x_max, n_bins)    #points where to evaluate cum funct
+        norm = integrate.quad(myfunc, x_min, x_max, arg, epsabs= abs_err, epsrel=rel_err)[0] #normalization to unit
+
+        cum_values = np.zeros(len(cum_points))      
+        for i in range(len(cum_points)):                   #evaluation of cumulative function in the selected points
+            integral = integrate.quad(myfunc, x_min, cum_points[i], arg, epsabs= abs_err, epsrel=rel_err)[0]
+            cum_values[i] = integral / norm #normalized
+
+        u = np.random.random_sample(int(sample_dim))
+        x = np.zeros(int(sample_dim))
+        y_n = np.zeros(n_bins)              #count how many cases are in a bin
+    
+        for i in range(0 , int(sample_dim)):
+            step = 0
+            while (cum_values[step] < u[i]):
+                step += 1
+            
+            x[i] = cum_values[step]
+            y_n[step] +=1  
+
+        end_time = time.monotonic()
+        time2 = timedelta(seconds= end_time - start_time)
+        print("Execution time with n_bins= " , str(n_bins), " :" , time2)
+
+        y_err = y_n ** 0.5
+        ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+        ax2.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+        title = r'Rejection method with N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
+        ax2.set_title(title)
+
+        fig.tight_layout()
+        plt.legend()
+        plt.savefig(os.path.join("Cumulative_diff_nbins.png"))       
 #**************************************************************
 #INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (cum func method on lum func)
 elif exercise == 8 :
@@ -591,10 +757,10 @@ elif exercise == 9:
     x_max = 1.0
  #drawing and plot
     draw = np.linspace(x_min, x_max, 10000)
-    fig, ax = plt.subplots()
+    fig, (ax1, ax2, ax3) = plt.subplots(3)
 
  #-----------------------------------------------
-    sample_dim = 1.0e2                      #sample dimension
+    sample_dim = 1.0e3                     #sample dimension
     n_bins = round(sample_dim**0.5)         #number of bins
     bin_dim = (x_max - x_min) / n_bins      #bins width
 
@@ -605,8 +771,8 @@ elif exercise == 9:
     beta = 1.0
     args = ()
 
-    test_func = 1
-    if test_func == 0: 
+    test_func = 0
+    if test_func== 0: 
         def myfunc(x):
             #log parabola
             a = alpha - beta * np.log10(x+2.0)
@@ -644,7 +810,8 @@ elif exercise == 9:
         y_n_cum[step] +=1
 
     end_time = time.monotonic()
-    print("Cumulative tech. execution time: " , timedelta(seconds= end_time - start_time))
+    cum_time = timedelta(seconds= end_time - start_time)
+    print("Cumulative tech. execution time: " , cum_time )
 
  #-----------------------------------------------
  #fsolve
@@ -663,7 +830,7 @@ elif exercise == 9:
     while counter < sample_dim:     #algorithm implementation
         u = rng.random()
         
-        zeros = fsolve(func_shifter, mid, (accum_func, u, arg), xtol= tol) #use of fsolve !TAKE CARE OF EXTIMATOR!  
+        zeros = fsolve(func_shifter, x_min, (accum_func, u, arg), xtol= tol) #use of fsolve !TAKE CARE OF EXTIMATOR!  
         y = zeros
         temp.append(y)
         counter +=1
@@ -671,11 +838,12 @@ elif exercise == 9:
     x_fs = np.array(temp)
 
     end_time = time.monotonic()
-    print("fsolve execution time: " , timedelta(seconds= end_time - start_time))
+    fsolve_time = timedelta(seconds= end_time - start_time)
+    print("fsolve execution time: " , fsolve_time)
  #-----------------------------------------------
  #rejection
     start_time = time.monotonic()
-    M = 20.0                                # Parameter of selection (must be as small as possible) 
+    M = 9.0                               # Parameter of selection (must be as small as possible) 
     sigma = 1.0 
     mu = 0.0
     rng = np.random.default_rng()
@@ -698,10 +866,9 @@ elif exercise == 9:
 
     x_rej = np.array(temp)
 
-
-
     end_time = time.monotonic()
-    print("Rejection execution time: " , timedelta(seconds= end_time - start_time))
+    rej_time = timedelta(seconds= end_time - start_time)
+    print("Rejection method execution time: " , rej_time )
     print("Iterations needed for rejection method: ", iter)
  #-----------------------------------------------
 
@@ -709,12 +876,14 @@ elif exercise == 9:
 
     vector_func = np.vectorize(myfunc)
     y_draw = vector_func(draw, *args)
-    ax.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
 
     #cumulative
     y_err_cum = y_n_cum ** 0.5
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax.errorbar(cum_points[1:], y_n_cum[1:] , yerr = y_err_cum[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Inv func + cum')
+    ax1.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+    ax1.errorbar(cum_points[1:], y_n_cum[1:] , yerr = y_err_cum[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Inv func + cum')
+    title = "Cumulative func. technique - (t_ex = " + str(cum_time.total_seconds()) + " s)"
+    ax1.set_title(title)
 
     #fsolve
     y_n_fs, bin_edges_fs = np.histogram(x_fs, n_bins, density = False)
@@ -725,9 +894,12 @@ elif exercise == 9:
     bin_dim_fs = np.diff(bin_edges_fs)[0]                              #bins width
 
     y_err_fs = (y_n_fs)**0.5                                          #error on counts
+    ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax.errorbar(bin_means_fs, y_n_fs , yerr = y_err_fs, color='blue', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Inv func + fsolve')
-    
+    ax2.errorbar(bin_means_fs, y_n_fs , yerr = y_err_fs, color='blue', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Inv func + fsolve')
+    title = "fsolve technique - (t_ex = " + str(fsolve_time.total_seconds()) + " s)"
+    ax2.set_title(title)
+
     #rejection
     y_n_rej, bin_edges_rej = np.histogram(x_rej, n_bins, density = False)
     bin_means_rej = np.zeros(len(bin_edges_rej)-1)
@@ -736,12 +908,14 @@ elif exercise == 9:
     
     bin_dim_rej = np.diff(bin_edges_rej)[0]                                #bins width
 
-
-    #print(np.sum(y_n/sample_dim))
     y_err_rej = (y_n_rej)**0.5                                              #error on counts
-    ax.errorbar(bin_means_rej, y_n_rej , yerr = y_err_rej, color='g', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Rej-Acc method')
-    
-    plt.legend()
+    ax3.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+    ax3.errorbar(bin_means_rej, y_n_rej , yerr = y_err_rej, color='g', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Rej-Acc method')
+    title = "Rejection method - (t_ex = " + str(rej_time.total_seconds()) + " s)"
+    ax3.set_title(title)   
+     
+    fig.tight_layout()
+    #plt.legend()
     plt.savefig(os.path.join("comparing.png"))
 
 end_time = time.monotonic()
