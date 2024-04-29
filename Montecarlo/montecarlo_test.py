@@ -12,10 +12,11 @@ import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
 from tools import bounded_norm_distr, bisection, newton_root_finder, log_scale_int, accum_func, func_shifter, func_norm, gaussian
+from gce import broken_pl, log_norm
 start_time = time.monotonic()
 
 
-exercise = 7      #to execute only one exercise at time
+exercise = 8      #to execute only one exercise at time
 
 #**************************************************************
 #plotting config
@@ -103,7 +104,7 @@ elif exercise == 3 :
     M = 5.0                               # Parameter of selection (must be as small as possible) 
     rng = np.random.default_rng()
 
-    comparison = True                       #If True generates different M comparison instead of simple plot
+    comparison = False                      #If True generates different M comparison instead of simple plot
  #-----------------------------------------------
  #Gaussian distr parameters   
     sigma = 1.0 
@@ -170,7 +171,8 @@ elif exercise == 3 :
         #ax.scatter(bin_means, y_n, marker = marker_st, color = marker_color)
         ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Rej-Acc method)')
         ax.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
-        #ax.plot(draw, myfunc(draw) /i , color = "black", label = "function f(x)")
+        title = "Rejection method MCS  with N_sample = " + str(int(sample_dim))
+        ax.set_title(title)
 
         plt.legend()
         plt.savefig(os.path.join("RAM_function_sample.png"))
@@ -188,11 +190,10 @@ elif exercise == 3 :
 
 
         y_err = (y_n)**0.5                                              #error on counts
-        ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Rej-Acc method)')
+        ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MC simulation')
         ax1.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
         title = "Rejection method (M = " + str(M) + ")"
         ax1.set_title(title)
-        plt.legend()
 
         temp = []
         counter = 0                     #counter of successfully selected points 
@@ -222,12 +223,14 @@ elif exercise == 3 :
 
 
         y_err = (y_n)**0.5                                              #error on counts
-        ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Rej-Acc method)')
-        ax2.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
+        ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
+        ax2.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black")
         title = "Rejection method (M = " + str(M) + ")"
         ax2.set_title(title)
 
+        fig.legend(loc = 'center right',  borderaxespad=0.1,)
         fig.tight_layout()
+        plt.subplots_adjust(right = 0.75)
         plt.savefig(os.path.join("RAM_diff_M.png"))
 
 #**************************************************************
@@ -320,7 +323,7 @@ elif exercise == 5 :
     mid = (x_max + x_min)/2.0               #middle point can be use as first extimator
     draw = np.linspace(x_min, x_max, 10000)
 
-    guess_comp = False                       #generate plot for different guess point comparison
+    guess_comp = True                       #generate plot for different guess point comparison
   #-----------------------------------------------
  #f(x) parameters
     k = 1.0
@@ -381,9 +384,11 @@ elif exercise == 5 :
 
         y_err = (y_n)**0.5                                          #error on counts
         #count, bins, ignored = ax.hist(x, n_bins, density=True)
-        ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
-    
+        ax.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')    
         ax.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
+        title = "Inverse function method (via fsolve) with N_sample = " + str(int(sample_dim))
+        ax.set_title(title)
+
 
         plt.legend()
         plt.savefig(os.path.join("inv_func_sample(fsolve).png"))
@@ -401,7 +406,7 @@ elif exercise == 5 :
 
         y_err = (y_n)**0.5                                          #error on counts
         #count, bins, ignored = ax.hist(x, n_bins, density=True)
-        ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
+        ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MC simulation')
     
         ax1.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
         ax1.set_title("Mid point as guess")
@@ -430,13 +435,13 @@ elif exercise == 5 :
 
         y_err = (y_n)**0.5                                          #error on counts
         #count, bins, ignored = ax.hist(x, n_bins, density=True)
-        ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + fsolve)')
-    
-        ax2.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
+        ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
+        ax2.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black")
         ax2.set_title("Starting point as guess")
         
+        fig.legend(loc = 'center right',  borderaxespad=0.1,)
         fig.tight_layout()
-        plt.legend()
+        plt.subplots_adjust(right = 0.75)
         plt.savefig(os.path.join("fsolve_diff_guess.png"))
 
 #**************************************************************
@@ -542,7 +547,7 @@ elif exercise == 7 :
     draw = np.linspace(x_min, x_max, 10000)
     fig, ax = plt.subplots()
 
-    comparison =  True              #if True generated diff n_bins comparison instead of simple plot
+    comparison =  False              #if True generated diff n_bins comparison instead of simple plot
  #-----------------------------------------------
     sample_dim = 1.0e3                      #sample dimension
     n_bins = round(sample_dim**0.5)         #number of bins
@@ -604,7 +609,8 @@ elif exercise == 7 :
         y_draw = vector_func(draw, *arg)
         y_err = y_n ** 0.5
         ax.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
-
+        title = "Inverse function method (via cumulative func)  with N_sample = " + str(int(sample_dim))
+        ax.set_title(title)
         #count, bins, ignored = ax.hist(x, n_bins, density=True)
         ax.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
 
@@ -618,7 +624,7 @@ elif exercise == 7 :
         y_draw = vector_func(draw, *arg)
         y_err = y_n ** 0.5
         ax1.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
-        ax1.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+        ax1.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MC simulation')
         title = r'Rejection method with N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
         ax1.set_title(title)
 
@@ -652,13 +658,14 @@ elif exercise == 7 :
         print("Execution time with n_bins= " , str(n_bins), " :" , time2)
 
         y_err = y_n ** 0.5
-        ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
-        ax2.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+        ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black")
+        ax2.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
         title = r'Rejection method with N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
         ax2.set_title(title)
 
+        fig.legend(loc = 'center right',  borderaxespad=0.1,)
         fig.tight_layout()
-        plt.legend()
+        plt.subplots_adjust(right = 0.73)
         plt.savefig(os.path.join("Cumulative_diff_nbins.png"))       
 #**************************************************************
 #INVERSE FUNCTION (ACCUMULATION) METHOD SAMPLING (cum func method on lum func)
@@ -671,36 +678,30 @@ elif exercise == 8 :
     draw_min = 1.0e29
     draw_max = 1.0e38
     fig, ax = plt.subplots()
-    ax.set_xlim(draw_min, x_max)
+    ax.set_xlim(draw_min, draw_max)
     plt.ylim(1.0e-45 , 1.2e-27)
 
  #-----------------------------------------------
-    sample_dim = 1.0e5            
-    n_bins = round(sample_dim**0.5)
+    sample_dim = 1.0e4            
+    n_bins = 30
 
  #-----------------------------------------------
-    test_func = 1
+    test_func = 4
     if test_func == 0: 
-        arg = (1.0, 1.0e33, 0.97, 2.6)      #disk data for ex
-        def myfunc(x, norm, x_b, n1, n2):   #broken power law function  (be carefull about exponential renorm)  
-            frac = x / x_b
-            if  frac < 1:
-                frac = frac**(-n1)
-            else:
-                frac = frac**(-n2)
-        
-            return (norm *frac)
+        arg = (1.0, 1.0e33, 0.97, 2.6)#disk BPL
+        myfunc = broken_pl  
     elif test_func == 1:
-        arg = (1.0, 2.5e34, -0.66, 18.2)      #NPTF data for ex
-        def myfunc(x, norm, x_b, n1, n2):   #broken power law function  (be carefull about exponential renorm)  
-            frac = x / x_b
-            if  frac < 1:
-                frac = frac**(-n1)
-            else:
-                frac = frac**(-n2)
-        
-            return (norm *frac)
-
+        arg = (1.0, 2.5e34, -0.66, 18.2)#NPTF BPL
+        myfunc = broken_pl  
+    elif test_func == 2:                    
+        arg = (8.8e33, 0.62)#GLC log norm 
+        myfunc = log_norm
+    elif test_func == 3:#GCE log norm
+        arg = (1.3e32, 0.70)
+        myfunc = log_norm
+    elif test_func == 4:#AIC log norm
+        arg = (4.3e30, 0.94)
+        myfunc = log_norm
  #--------------------------
 
     cum_points = np.geomspace(x_min, x_max, n_bins, endpoint = False)    #points where to evaluate cum funct (to be fixed)
@@ -733,7 +734,7 @@ elif exercise == 8 :
   #print controls
     #print(cum_points)
     #print(bin_dim)
-    #print(cum_values)
+    print(cum_values)
     #print(y_n)
 
  #-----------------------------------------------
@@ -746,6 +747,8 @@ elif exercise == 8 :
     y_err = y_n ** 0.5
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
     ax.errorbar(cum_points[1:], y_n[1:]*(1.0/bin_dim[1:])/sample_dim, yerr = y_err[1:]*(1.0/bin_dim[1:])/sample_dim, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+    title = "IF(cumulative func) - N_sample = " + str(int(sample_dim)) + ", N_bins = " + str(n_bins)
+    ax.set_title(title)
 
     plt.legend()
     plt.savefig(os.path.join("inv_func_sample_lum_func.png"))
@@ -880,8 +883,8 @@ elif exercise == 9:
     #cumulative
     y_err_cum = y_n_cum ** 0.5
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax1.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
-    ax1.errorbar(cum_points[1:], y_n_cum[1:] , yerr = y_err_cum[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Inv func + cum')
+    ax1.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "Function f(x)")
+    ax1.errorbar(cum_points[1:], y_n_cum[1:] , yerr = y_err_cum[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS IF-c')
     title = "Cumulative func. technique - (t_ex = " + str(cum_time.total_seconds()) + " s)"
     ax1.set_title(title)
 
@@ -894,9 +897,9 @@ elif exercise == 9:
     bin_dim_fs = np.diff(bin_edges_fs)[0]                              #bins width
 
     y_err_fs = (y_n_fs)**0.5                                          #error on counts
-    ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
+    ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black")
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax2.errorbar(bin_means_fs, y_n_fs , yerr = y_err_fs, color='blue', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Inv func + fsolve')
+    ax2.errorbar(bin_means_fs, y_n_fs , yerr = y_err_fs, color='blue', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS IF-f')
     title = "fsolve technique - (t_ex = " + str(fsolve_time.total_seconds()) + " s)"
     ax2.set_title(title)
 
@@ -909,13 +912,14 @@ elif exercise == 9:
     bin_dim_rej = np.diff(bin_edges_rej)[0]                                #bins width
 
     y_err_rej = (y_n_rej)**0.5                                              #error on counts
-    ax3.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
-    ax3.errorbar(bin_means_rej, y_n_rej , yerr = y_err_rej, color='g', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'Rej-Acc method')
+    ax3.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black")
+    ax3.errorbar(bin_means_rej, y_n_rej , yerr = y_err_rej, color='g', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS RAM')
     title = "Rejection method - (t_ex = " + str(rej_time.total_seconds()) + " s)"
     ax3.set_title(title)   
      
+    fig.legend(loc = 'center right',  borderaxespad=0.1,)
     fig.tight_layout()
-    #plt.legend()
+    plt.subplots_adjust(right = 0.73)
     plt.savefig(os.path.join("comparing.png"))
 
 end_time = time.monotonic()
