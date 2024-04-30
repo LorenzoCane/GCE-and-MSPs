@@ -16,14 +16,22 @@ from gce import broken_pl, log_norm
 start_time = time.monotonic()
 
 
-exercise = 8      #to execute only one exercise at time
+exercise = 5      #to execute only one exercise at time
+#1 -2 : reproducing simple distribution sample 
+#3 : Rej-Acc method(1 sample)
+#4 : Rej-Acc method multiple sample
+#5 : Inverse function method using fsolve
+#6 : Inverse function using custom root finders (not working)
+#7 : Inverse function using cumulative 
+#8 : IF - cumon luminosty functions
+#9 : Comparison between different techniques
 
+comparison = True       #if true generates the comparison section of the selected exercise (if it exists)
 #**************************************************************
 #plotting config
 marker_st =  'o'        
 marker_color = 'orange'
 func_color = 'black'
-
 #-----------------------------------------------
 #integral config
 abs_err = 0.0
@@ -104,7 +112,6 @@ elif exercise == 3 :
     M = 5.0                               # Parameter of selection (must be as small as possible) 
     rng = np.random.default_rng()
 
-    comparison = False                      #If True generates different M comparison instead of simple plot
  #-----------------------------------------------
  #Gaussian distr parameters   
     sigma = 1.0 
@@ -323,7 +330,6 @@ elif exercise == 5 :
     mid = (x_max + x_min)/2.0               #middle point can be use as first extimator
     draw = np.linspace(x_min, x_max, 10000)
 
-    guess_comp = True                       #generate plot for different guess point comparison
   #-----------------------------------------------
  #f(x) parameters
     k = 1.0
@@ -372,7 +378,7 @@ elif exercise == 5 :
 
  #-----------------------------------------------
  #simple scatter/hist plot
-    if not guess_comp :
+    if not comparison :
         fig, ax = plt.subplots()
 
         y_n, bin_edges = np.histogram(x, n_bins, density = False)
@@ -409,7 +415,7 @@ elif exercise == 5 :
         ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MC simulation')
     
         ax1.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black", label = "function f(x)")
-        ax1.set_title("Mid point as guess")
+        ax1.set_title("IF using fsolve and mid point as guess")
 
         #re-evaluation needed
         rng = np.random.default_rng()           #random seed
@@ -437,7 +443,7 @@ elif exercise == 5 :
         #count, bins, ignored = ax.hist(x, n_bins, density=True)
         ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
         ax2.plot(draw, myfunc(draw)*bin_dim*sample_dim, color = "black")
-        ax2.set_title("Starting point as guess")
+        ax2.set_title("IF using fsolve and starting point as guess")
         
         fig.legend(loc = 'center right',  borderaxespad=0.1,)
         fig.tight_layout()
@@ -547,7 +553,6 @@ elif exercise == 7 :
     draw = np.linspace(x_min, x_max, 10000)
     fig, ax = plt.subplots()
 
-    comparison =  False              #if True generated diff n_bins comparison instead of simple plot
  #-----------------------------------------------
     sample_dim = 1.0e3                      #sample dimension
     n_bins = round(sample_dim**0.5)         #number of bins
@@ -625,7 +630,7 @@ elif exercise == 7 :
         y_err = y_n ** 0.5
         ax1.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
         ax1.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MC simulation')
-        title = r'Rejection method with N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
+        title = r'Cumulative method - N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
         ax1.set_title(title)
 
         start_time = time.monotonic()
@@ -660,7 +665,7 @@ elif exercise == 7 :
         y_err = y_n ** 0.5
         ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black")
         ax2.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
-        title = r'Rejection method with N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
+        title = r'Cumulative method - N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
         ax2.set_title(title)
 
         fig.legend(loc = 'center right',  borderaxespad=0.1,)
@@ -682,8 +687,8 @@ elif exercise == 8 :
     plt.ylim(1.0e-45 , 1.2e-27)
 
  #-----------------------------------------------
-    sample_dim = 1.0e4            
-    n_bins = 30
+    sample_dim = 1.0e5           
+    n_bins = 25
 
  #-----------------------------------------------
     test_func = 4
@@ -746,7 +751,7 @@ elif exercise == 8 :
 
     y_err = y_n ** 0.5
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax.errorbar(cum_points[1:], y_n[1:]*(1.0/bin_dim[1:])/sample_dim, yerr = y_err[1:]*(1.0/bin_dim[1:])/sample_dim, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+    ax.errorbar(cum_points[1:], y_n[1:]*(1.0/bin_dim[1:])/sample_dim, yerr = y_err[1:]*(1.0/bin_dim[1:])/sample_dim, color='r', capsize=1, capthick=1,ls='--', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
     title = "IF(cumulative func) - N_sample = " + str(int(sample_dim)) + ", N_bins = " + str(n_bins)
     ax.set_title(title)
 
@@ -763,7 +768,7 @@ elif exercise == 9:
     fig, (ax1, ax2, ax3) = plt.subplots(3)
 
  #-----------------------------------------------
-    sample_dim = 1.0e3                     #sample dimension
+    sample_dim = 1.0e3                    #sample dimension
     n_bins = round(sample_dim**0.5)         #number of bins
     bin_dim = (x_max - x_min) / n_bins      #bins width
 
@@ -918,6 +923,8 @@ elif exercise == 9:
     ax3.set_title(title)   
      
     fig.legend(loc = 'center right',  borderaxespad=0.1,)
+    fig_title = "Comparison with N_sample = " + str(int(sample_dim)) + ", N_bins = " + str(n_bins)
+    plt.suptitle(fig_title)
     fig.tight_layout()
     plt.subplots_adjust(right = 0.73)
     plt.savefig(os.path.join("comparing.png"))
