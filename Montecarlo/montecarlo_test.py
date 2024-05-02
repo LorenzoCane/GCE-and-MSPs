@@ -16,7 +16,7 @@ from gce import broken_pl, log_norm
 start_time = time.monotonic()
 
 
-exercise = 5      #to execute only one exercise at time
+exercise = 9     #to execute only one exercise at time
 #1 -2 : reproducing simple distribution sample 
 #3 : Rej-Acc method(1 sample)
 #4 : Rej-Acc method multiple sample
@@ -156,7 +156,11 @@ elif exercise == 3 :
         iter += 1 
 
     x = np.array(temp)
-    print("Iterations needed: ", iter)
+    end_time = time.monotonic()
+    ex_time = str(timedelta(seconds= end_time - start_time).total_seconds()) + " s"
+    print("Execution time:  (M =" ,   str(M) , ") :", timedelta(seconds= end_time - start_time))
+    title = "Iterations needed (M =  " + str(M) + ") :" +   str(iter)
+    print(title)
 
  #---------------------------------------------------------------------------------------------
   # Single plot
@@ -199,8 +203,10 @@ elif exercise == 3 :
         y_err = (y_n)**0.5                                              #error on counts
         ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MC simulation')
         ax1.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
-        title = "Rejection method (M = " + str(M) + ")"
+        title = "Rejection method (M = " + str(M) + ") - t_ex = " + ex_time
         ax1.set_title(title)
+
+        start_time = time.monotonic()
 
         temp = []
         counter = 0                     #counter of successfully selected points 
@@ -219,7 +225,11 @@ elif exercise == 3 :
             iter += 1 
 
         x = np.array(temp)
-        print("Iterations needed (M x 10): ", iter)
+        end_time = time.monotonic()
+        ex_time = str(timedelta(seconds= end_time - start_time).total_seconds()) + " s"
+        print("Execution time:  (M =" ,   str(M) , ") :", timedelta(seconds= end_time - start_time))
+        title = "Iterations needed (M =  " + str(M) + ") :" +   str(iter)
+        print(title)
 
         y_n, bin_edges = np.histogram(x, n_bins, density = False)
         bin_means = np.zeros(len(bin_edges)-1)
@@ -232,10 +242,12 @@ elif exercise == 3 :
         y_err = (y_n)**0.5                                              #error on counts
         ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
         ax2.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black")
-        title = "Rejection method (M = " + str(M) + ")"
+        title = "Rejection method (M = " + str(M) + ") - t_ex = " + ex_time
         ax2.set_title(title)
 
         fig.legend(loc = 'center right',  borderaxespad=0.1,)
+        fig_title = "M dependance with N_sample = " + str(int(sample_dim)) + ", N_bins = " + str(n_bins)
+        plt.suptitle(fig_title)
         fig.tight_layout()
         plt.subplots_adjust(right = 0.75)
         plt.savefig(os.path.join("RAM_diff_M.png"))
@@ -605,8 +617,9 @@ elif exercise == 7 :
         y_n[step] +=1
 
     end_time = time.monotonic()
-    time1 = timedelta(seconds= end_time - start_time)
-    print("Execution time with n_bins= " , str(n_bins), " :" , time1)
+    time1 = timedelta(seconds= end_time - start_time).total_seconds()
+    printing = "Execution time with n_bins = " + str(n_bins) +  " :" + str(time1) + " s"
+    print(printing)
  #-----------------------------------------------
     #Single plot
     if not comparison:
@@ -659,8 +672,9 @@ elif exercise == 7 :
             y_n[step] +=1  
 
         end_time = time.monotonic()
-        time2 = timedelta(seconds= end_time - start_time)
-        print("Execution time with n_bins= " , str(n_bins), " :" , time2)
+        time1 = timedelta(seconds= end_time - start_time).total_seconds()
+        printing = "Execution time with n_bins = " + str(n_bins) +  " :" + str(time1) + " s"
+        print(printing)
 
         y_err = y_n ** 0.5
         ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black")
@@ -768,7 +782,7 @@ elif exercise == 9:
     fig, (ax1, ax2, ax3) = plt.subplots(3)
 
  #-----------------------------------------------
-    sample_dim = 1.0e3                    #sample dimension
+    sample_dim = 1.0e4                   #sample dimension
     n_bins = round(sample_dim**0.5)         #number of bins
     bin_dim = (x_max - x_min) / n_bins      #bins width
 
