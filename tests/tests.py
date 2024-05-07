@@ -329,3 +329,12 @@ elif test_numb == 7:
     res = bisection(myfunc, args, x_min, x_max, tol, n_max, True)
 
     print(res)
+
+
+           #def chisq (x, y , func, arg=()):
+            #chi = 0.0
+            #for i in x:
+            #    expect = func(x[i], *arg)
+            #    chi_i = ((y[i] - expect)**2) / expect
+            #    chi += chi_i
+            #return chi 

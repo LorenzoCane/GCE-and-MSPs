@@ -3,6 +3,7 @@
 import numpy as np
 import scipy.integrate as integrate
 from scipy.special import erf
+from scipy.stats import chi2
 #from scipy.special import gammaincc,gamma, exp1
 #import os
 
@@ -209,4 +210,15 @@ def bounded_norm_distr(mu, sigma, x_min, x_max):
 
     return y
 
+
+def chisq (x, y , func, arg=()):
+    chi = 0.0
+    df = len(x) -1
+    for i in range(0,len(x)):
+        expect = func(x[i], *arg)
+        chi_i = ((y[i] - expect)**2) / expect
+        chi += chi_i
+    p_value = 1 - chi2.cdf(x=chi,  # Find the p-value
+                             df=df)
+    return (chi, p_value)
 

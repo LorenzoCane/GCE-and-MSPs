@@ -7,24 +7,25 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.special import erf
 from scipy.optimize import fsolve
-from scipy.interpolate import interp1d
+from scipy.stats import chi2
 import os
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
-from tools import bounded_norm_distr, bisection, newton_root_finder, log_scale_int, accum_func, func_shifter, func_norm, gaussian
+from tools import chisq, bounded_norm_distr, bisection, newton_root_finder, log_scale_int, accum_func, func_shifter, func_norm, gaussian
 from gce import broken_pl, log_norm
 start_time = time.monotonic()
 
 
-exercise = 9     #to execute only one exercise at time
+exercise = 10    #to execute only one exercise at time
 #1 -2 : reproducing simple distribution sample 
 #3 : Rej-Acc method(1 sample)
 #4 : Rej-Acc method multiple sample
 #5 : Inverse function method using fsolve
 #6 : Inverse function using custom root finders (not working)
 #7 : Inverse function using cumulative 
-#8 : IF - cumon luminosty functions
+#8 : IF - cumulative luminosty functions
 #9 : Comparison between different techniques
+#10 : test functions plotting
 
 comparison = True       #if true generates the comparison section of the selected exercise (if it exists)
 #**************************************************************
@@ -158,7 +159,7 @@ elif exercise == 3 :
     x = np.array(temp)
     end_time = time.monotonic()
     ex_time = str(timedelta(seconds= end_time - start_time).total_seconds()) + " s"
-    print("Execution time:  (M =" ,   str(M) , ") :", timedelta(seconds= end_time - start_time))
+    print("Execution time  (M =" ,   str(M) , ") :", timedelta(seconds= end_time - start_time))
     title = "Iterations needed (M =  " + str(M) + ") :" +   str(iter)
     print(title)
 
@@ -190,6 +191,7 @@ elif exercise == 3 :
 
  #Comparison plot (works better with abs value function an initial cond 1<M<10)
     else:
+         
         fig, (ax1, ax2) = plt.subplots(2)
 
         y_n, bin_edges = np.histogram(x, n_bins, density = False)
@@ -198,13 +200,15 @@ elif exercise == 3 :
             bin_means[n] = (bin_edges[n+1] + bin_edges[n]) * 0.5       #mid point of bins
     
         bin_dim = np.diff(bin_edges)[0]                                #bins width
-
-
+        
+        chi1 = chisq(bin_means, y_n, func_norm, (myfunc, x_min, x_max, sample_dim*bin_dim))
+        print("chi_square value  (M =" ,   str(M) , ") :", chi1[0] , "\np_value  (M =" ,   str(M) , ") :", chi1[1])
         y_err = (y_n)**0.5                                              #error on counts
         ax1.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MC simulation')
         ax1.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black", label = "function f(x)")
-        title = "Rejection method (M = " + str(M) + ") - t_ex = " + ex_time
+        title = "Rejection method (M = " + str(M) + ")"
         ax1.set_title(title)
+
 
         start_time = time.monotonic()
 
@@ -227,7 +231,7 @@ elif exercise == 3 :
         x = np.array(temp)
         end_time = time.monotonic()
         ex_time = str(timedelta(seconds= end_time - start_time).total_seconds()) + " s"
-        print("Execution time:  (M =" ,   str(M) , ") :", timedelta(seconds= end_time - start_time))
+        print("Execution time  (M =" ,   str(M) , ") :", timedelta(seconds= end_time - start_time))
         title = "Iterations needed (M =  " + str(M) + ") :" +   str(iter)
         print(title)
 
@@ -238,11 +242,12 @@ elif exercise == 3 :
     
         bin_dim = np.diff(bin_edges)[0]                                #bins width
 
-
+        chi1 = chisq(bin_means, y_n, func_norm, (myfunc, x_min, x_max, sample_dim*bin_dim))
+        print("chi_square value  (M =" ,   str(M) , ") :", chi1[0] , "\np_value  (M =" ,   str(M) , ") :", chi1[1])
         y_err = (y_n)**0.5                                              #error on counts
         ax2.errorbar(bin_means, y_n , yerr = y_err, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
         ax2.plot(draw, func_norm(draw, myfunc, x_min, x_max, sample_dim)* bin_dim, color = "black")
-        title = "Rejection method (M = " + str(M) + ") - t_ex = " + ex_time
+        title = "Rejection method (M = " + str(M) + ")"
         ax2.set_title(title)
 
         fig.legend(loc = 'center right',  borderaxespad=0.1,)
@@ -618,7 +623,7 @@ elif exercise == 7 :
 
     end_time = time.monotonic()
     time1 = timedelta(seconds= end_time - start_time).total_seconds()
-    printing = "Execution time with n_bins = " + str(n_bins) +  " :" + str(time1) + " s"
+    printing = "Execution time (n_bins = " + str(n_bins) +  ") :" + str(time1) + " s"
     print(printing)
  #-----------------------------------------------
     #Single plot
@@ -643,8 +648,11 @@ elif exercise == 7 :
         y_err = y_n ** 0.5
         ax1.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "function f(x)")
         ax1.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MC simulation')
-        title = r'Cumulative method - N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
+        title = r'Cumulative method -  and N_bins=' + str(n_bins)
         ax1.set_title(title)
+
+        chi1 = chisq(cum_points[1:], y_n[1:], func_norm, (myfunc, x_min, x_max, sample_dim*bin_dim))
+        print("chi_square value  (n_bins=" ,   str(n_bins) , ") :", chi1[0] , "\np_value  (n_bins =" ,   str(n_bins) , ") :", chi1[1])
 
         start_time = time.monotonic()
 
@@ -673,16 +681,21 @@ elif exercise == 7 :
 
         end_time = time.monotonic()
         time1 = timedelta(seconds= end_time - start_time).total_seconds()
-        printing = "Execution time with n_bins = " + str(n_bins) +  " :" + str(time1) + " s"
+        printing = "Execution time (n_bins = " + str(n_bins) +  ") :" + str(time1) + " s"
         print(printing)
 
         y_err = y_n ** 0.5
         ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black")
         ax2.errorbar(cum_points[1:], y_n[1:] , yerr = y_err[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3)
-        title = r'Cumulative method - N_sample=' + str(sample_dim) + r' and N_bins=' + str(n_bins)
+        title = r'Cumulative method - N_bins=' + str(n_bins)
         ax2.set_title(title)
 
+        chi1 = chisq(cum_points[1:], y_n[1:], func_norm, (myfunc, x_min, x_max, sample_dim*bin_dim))
+        print("chi_square value  (n_bins=" ,   str(n_bins) , ") :", chi1[0] , "\np_value  (n_bins =" ,   str(n_bins) , ") :", chi1[1])
+
         fig.legend(loc = 'center right',  borderaxespad=0.1,)
+        fig_title = "N_bins dependence with N_sample = " + str(int(sample_dim)) 
+        plt.suptitle(fig_title)
         fig.tight_layout()
         plt.subplots_adjust(right = 0.73)
         plt.savefig(os.path.join("Cumulative_diff_nbins.png"))       
@@ -782,7 +795,7 @@ elif exercise == 9:
     fig, (ax1, ax2, ax3) = plt.subplots(3)
 
  #-----------------------------------------------
-    sample_dim = 1.0e4                   #sample dimension
+    sample_dim = 1.0e4                  #sample dimension
     n_bins = round(sample_dim**0.5)         #number of bins
     bin_dim = (x_max - x_min) / n_bins      #bins width
 
@@ -833,7 +846,8 @@ elif exercise == 9:
 
     end_time = time.monotonic()
     cum_time = timedelta(seconds= end_time - start_time)
-    print("Cumulative tech. execution time: " , cum_time )
+    cum_chi = chisq(cum_points[1:], y_n_cum[1:], func_norm, (myfunc, x_min, x_max, sample_dim*bin_dim))
+
 
  #-----------------------------------------------
  #fsolve
@@ -861,7 +875,6 @@ elif exercise == 9:
 
     end_time = time.monotonic()
     fsolve_time = timedelta(seconds= end_time - start_time)
-    print("fsolve execution time: " , fsolve_time)
  #-----------------------------------------------
  #rejection
     start_time = time.monotonic()
@@ -890,8 +903,8 @@ elif exercise == 9:
 
     end_time = time.monotonic()
     rej_time = timedelta(seconds= end_time - start_time)
-    print("Rejection method execution time: " , rej_time )
-    print("Iterations needed for rejection method: ", iter)
+  
+    #print("Iterations needed for rejection method: ", iter)
  #-----------------------------------------------
 
     #plots
@@ -904,8 +917,12 @@ elif exercise == 9:
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
     ax1.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black", label = "Function f(x)")
     ax1.errorbar(cum_points[1:], y_n_cum[1:] , yerr = y_err_cum[1:], color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS IF-c')
-    title = "Cumulative func. technique - (t_ex = " + str(cum_time.total_seconds()) + " s)"
+    title = "Cumulative func. technique "
     ax1.set_title(title)
+
+    print("Cumulative tech. execution time: " , cum_time, " s")
+    print("Cumulative tech. chi_sq: " , cum_chi[0])
+
 
     #fsolve
     y_n_fs, bin_edges_fs = np.histogram(x_fs, n_bins, density = False)
@@ -915,12 +932,17 @@ elif exercise == 9:
     
     bin_dim_fs = np.diff(bin_edges_fs)[0]                              #bins width
 
+    fsolve_chi = chisq(bin_means_fs, y_n_fs, func_norm, (myfunc, x_min, x_max, sample_dim*bin_dim))
+
     y_err_fs = (y_n_fs)**0.5                                          #error on counts
     ax2.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black")
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
     ax2.errorbar(bin_means_fs, y_n_fs , yerr = y_err_fs, color='blue', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS IF-f')
-    title = "fsolve technique - (t_ex = " + str(fsolve_time.total_seconds()) + " s)"
+    title = "fsolve technique "
     ax2.set_title(title)
+
+    print("Root finder tech. execution time: " , fsolve_time, " s")
+    print("Root finder tech. chi_sq: " , fsolve_chi[0])
 
     #rejection
     y_n_rej, bin_edges_rej = np.histogram(x_rej, n_bins, density = False)
@@ -930,11 +952,17 @@ elif exercise == 9:
     
     bin_dim_rej = np.diff(bin_edges_rej)[0]                                #bins width
 
+    rej_chi = chisq(bin_means_rej, y_n_rej, func_norm, (myfunc, x_min, x_max, sample_dim*bin_dim))
+
     y_err_rej = (y_n_rej)**0.5                                              #error on counts
     ax3.plot(draw, y_draw/norm*sample_dim*bin_dim, color = "black")
     ax3.errorbar(bin_means_rej, y_n_rej , yerr = y_err_rej, color='g', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS RAM')
-    title = "Rejection method - (t_ex = " + str(rej_time.total_seconds()) + " s)"
+    title = "Rejection method "
     ax3.set_title(title)   
+
+    print("Rejection method execution time: " , rej_time, " s")
+    print("Rejection method chi_sq: " , rej_chi[0])
+
      
     fig.legend(loc = 'center right',  borderaxespad=0.1,)
     fig_title = "Comparison with N_sample = " + str(int(sample_dim)) + ", N_bins = " + str(n_bins)
@@ -942,6 +970,38 @@ elif exercise == 9:
     fig.tight_layout()
     plt.subplots_adjust(right = 0.73)
     plt.savefig(os.path.join("comparing.png"))
+
+#**************************************************************
+#COMPARING (simple func)
+elif exercise == 10:
+    x_min = -1.0                    #interval of interest
+    x_max = 1.0
+    #drawing and plot
+    draw = np.linspace(x_min, x_max, 10000)
+    fig, ax = plt.subplots()
+
+    k = 1.0
+    alpha = -2.0
+    beta = 1.0
+    arg = ()
+
+
+    def myfunc0(x):
+        #log parabola
+        a = alpha - beta * np.log10(x+2.0)
+        return (k * (x+2.0)**a) 
+    def myfunc1(x):
+        #abs func (cusp)
+        return (-abs(x) + 1.0) 
+    def myfunc2(x):
+        return (-x+2.0)
+    
+    ax.plot(draw, myfunc0(draw), color = "blue", label = "log-parabola")
+    ax.plot(draw, myfunc1(draw), color = "red", label = "cusp-function")
+
+    ax.set_title("Test functions used")
+    plt.legend()
+    plt.savefig(os.path.join("test_funct.png"))
 
 end_time = time.monotonic()
 print("Execution time: " , timedelta(seconds= end_time - start_time))
