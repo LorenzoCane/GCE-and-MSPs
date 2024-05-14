@@ -1,4 +1,9 @@
-
+#######################################################################################
+# In this file I study some common luminosity functions of MSPs
+# I use some literature benchmarks and I try to replecate Dinsmore paper (arXiv:2112.09699) results
+# Created by Lorenzo Cane (Unito, LAPTh) on 14/04/2024
+# This code is part of my thesis project
+#######################################################################################
 
 #import
 import time 

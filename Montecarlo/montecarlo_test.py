@@ -1,4 +1,11 @@
-#Exercise from PDG reviews
+#######################################################################################
+# In this file I study MonteCarlo sampling
+# First some exercise in which I sample simple functions using known algorithms
+# Then I study sample methods and techniques their dependences and I compare their results 
+# Created by Lorenzo Cane (Unito, LAPTh) on 25/04/2024
+# This code is part of my thesis project
+#######################################################################################
+
 
 import time 
 from datetime import timedelta

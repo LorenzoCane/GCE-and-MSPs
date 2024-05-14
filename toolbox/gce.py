@@ -1,3 +1,10 @@
+#######################################################################################
+# In this file are reported the definition of mot common luminosity functions
+# Import this file to use them multiple times
+# Created by Lorenzo Cane (Unito, LAPTh) on 14/04/2024
+# This code is part of my thesis project
+#######################################################################################
+
 
 import numpy as np
 #import scipy.integrate as integrate

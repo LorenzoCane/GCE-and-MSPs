@@ -1,4 +1,9 @@
-#COLLECTION OF USEFULL FUNCTION DEVELOPED WORKING ON MY MASTER THESIS
+#######################################################################################
+# COLLECTION OF USEFULL FUNCTIONS DEVELOPED WORKING ON MY MASTER THESIS
+# They are divide by scopes and arguments
+# Created by Lorenzo Cane (Unito, LAPTh) on 14/04/2024
+# This code is part of my thesis project
+#######################################################################################
 
 import numpy as np
 import scipy.integrate as integrate
@@ -176,6 +181,7 @@ def mygamma_inc(s,x, inf_approx=1.0e50, abs_err=0.0, rel_err=1.0e-8, div_numb=50
     I = log_scale_int(integr, x, np.infty, arg, inf_approx, abs_err, rel_err, div_numb)
     #I = integrate.quad(integr, x , 1.0e70, args=(s), epsabs=abs_err, epsrel=rel_err, limit=div_numb)
     return I[0]
+
 #-------------------------------------------------------
 
 def gaussian(x , x0, sigma, x_min, x_max):
@@ -183,6 +189,22 @@ def gaussian(x , x0, sigma, x_min, x_max):
     norm1 = 1.0 / sigma / (2.0 * np.pi)**0.5
     norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
     return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
+
+#-------------------------------------------------------
+def chisq (x, y , func, arg=()):
+    # calculate the chi square and p-value between a distribution of point with cohordinates x and y and a function func
+    # x and y are array-like and of the same lenght. More argument of func can be passed via arg
+    #return a list : chi square value and p-value
+    chi = 0.0
+    df = len(x) -1
+    for i in range(0,len(x)):
+        expect = func(x[i], *arg)
+        chi_i = ((y[i] - expect)**2) / expect
+        chi += chi_i
+    p_value = 1 - chi2.cdf(x=chi,  # Find the p-value
+                             df=df)
+    return (chi, p_value)
+
 #*************************************************************
 
 #Random distribution algorithms
@@ -210,15 +232,4 @@ def bounded_norm_distr(mu, sigma, x_min, x_max):
 
     return y
 
-
-def chisq (x, y , func, arg=()):
-    chi = 0.0
-    df = len(x) -1
-    for i in range(0,len(x)):
-        expect = func(x[i], *arg)
-        chi_i = ((y[i] - expect)**2) / expect
-        chi += chi_i
-    p_value = 1 - chi2.cdf(x=chi,  # Find the p-value
-                             df=df)
-    return (chi, p_value)
 

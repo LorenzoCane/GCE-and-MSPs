@@ -1,3 +1,8 @@
+#######################################################################################
+# In this file I study redo the analyses on Calore data(arXiv:1411.4647) trying to replecate Flux energy fit and total flux
+# Created by Lorenzo Cane (Unito, LAPTh) on 14/04/2024
+# This code is part of my thesis project
+#######################################################################################
 
 #import
 import time 
