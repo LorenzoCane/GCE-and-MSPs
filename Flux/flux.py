@@ -150,3 +150,5 @@ plt.savefig(os.path.join('flux.png'))
 f.close()
 end_time = time.monotonic()
 print(timedelta(seconds= end_time - start_time))
+
+print("Results written in flux.txt file")

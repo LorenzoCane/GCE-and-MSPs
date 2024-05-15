@@ -44,7 +44,7 @@ def broken_pl_arr(x, norm, x_b, n1, n2):
 #-------------------------------------------------------
 
 def broken_pl(x, norm, x_b, n1, n2):                  
-    #broken power law function  (be carefull about exponential renorm)  
+    #broken power law function as used in Dinsmore (be carefull about exponential renorm) 
     #norm: normalization, x_b: broken point, n1: 1st part index, n2: 2nd part index
     frac = x / x_b
     if frac < 1:
@@ -55,9 +55,9 @@ def broken_pl(x, norm, x_b, n1, n2):
     return (norm *frac)
 #-------------------------------------------------------
 
-def gNRW2(s, l , b , rs, gamma, rc):    
+def gNRW2(s, l , b , rs, gamma, rc = 8.5):    
     #general Navarro-Frenk-White squared
-    #s: Earth point distance; l, b:  long and lat.; rs:scale radius; gamma: slope; rc:Earth-GC dist.
+    #s: Earth point distance; l, b:  long and lat.; rs:scale radius; gamma: slope; rc:Earth-GC dist. in kpc
     r = np.sqrt(s*s + rc*rc - 2*s*rc*np.cos(l)*np.cos(b))
     a = (r / rs)**(-2*gamma)
     b = (1 + r / rs)**(2*(-3+gamma))

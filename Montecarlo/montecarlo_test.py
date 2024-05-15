@@ -23,7 +23,7 @@ from gce import broken_pl, log_norm
 start_time = time.monotonic()
 
 
-exercise = 10    #to execute only one exercise at time
+exercise = 3    #to execute only one exercise at time
 #1 -2 : reproducing simple distribution sample 
 #3 : Rej-Acc method(1 sample)
 #4 : Rej-Acc method multiple sample

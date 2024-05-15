@@ -334,3 +334,5 @@ plt.savefig(os.path.join('2efold.png'))
 f.close()
 end_time = time.monotonic()
 print(timedelta(seconds= end_time - start_time))
+
+print("Results written in lum_func.txt file")
