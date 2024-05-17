@@ -23,12 +23,12 @@ from gce import broken_pl, log_norm
 start_time = time.monotonic()
 
 
-exercise = 3    #to execute only one exercise at time
+exercise = 4    #to execute only one exercise at time
 #1 -2 : reproducing simple distribution sample 
 #3 : Rej-Acc method(1 sample)
 #4 : Rej-Acc method multiple sample
 #5 : Inverse function method using fsolve
-#6 : Inverse function using custom root finders (not working)
+#6 : Inverse function using custom root finders (not done)
 #7 : Inverse function using cumulative 
 #8 : IF - cumulative luminosty functions
 #9 : Comparison between different techniques
@@ -265,7 +265,7 @@ elif exercise == 3 :
         plt.savefig(os.path.join("RAM_diff_M.png"))
 
 #**************************************************************
-#REJECTION-ACCEPTANCE METHOD MULTIPLE-SAMPLING (not working now)
+#REJECTION-ACCEPTANCE METHOD MULTIPLE-SAMPLING 
 elif exercise == 4 : 
     
     x_min = 0.0
@@ -295,7 +295,7 @@ elif exercise == 4 :
         norm2 = 1.0 / (erf((x_max-x0)/sigma/2.0**0.5) - erf((x_min-x0)/sigma/2.0**0.5))
         return np.exp(-(x - x0)*(x - x0)/sigma/sigma/2.0) * norm1 * norm2
     
-    test_func = 2
+    test_func = 0
     def myfunc(x):
         if test_func == 0: 
             #log parabola
