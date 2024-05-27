@@ -15,7 +15,7 @@ from iminuit.cost import LeastSquares
 import sys
 sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
 from tools import cmtokpc, log_scale_int, GeVtoerg
-from gce import  broken_pl_arr, broken_pl
+from gce import  *
 #from jacobi import propagate
 import os
 
@@ -68,19 +68,20 @@ class Data(object):
 
 
 d = Data() 
-
+spec = np.divide(d.flux, d.emeans)
 #****************************************************************
 #Fit with a broken power law
 l = LeastSquares(d.emeans, d.flux, d.full_sigma , broken_pl_arr) 
 m = Minuit(l, 1.0e-6, 2.06, -0.58, 0.63, name=("F_0", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
 
-m.fixed["E_b", "n1", "n2"] = True
+m.fixed["E_b", "n1", "n2"] = False
 
 m.migrad()
 m.hesse()
 
 m.values[2], m.values[3] = m.values[2]+2 , m.values[3]+2  #to be better compared with Dinsmore values
-f.write('Fit parameters:'), f.write('\n')
+f.write('Broken Power Law results\n')
+f.write('Flux fit parameters (BPL):'), f.write('\n')
 for key, value, error in zip(m.parameters, m.values, m.errors):
     line = [str(key), ' = ', str(value), ' +- ', str(error), '\n']
     for i in line: f.write(i)
@@ -96,6 +97,34 @@ fluxres1 =["Flux (in sr units): \nF_Omega =" , str(I[0]), " [GeV/cm^2/s/sr] = ",
 fluxres2 =["Flux: \nF =" , str(I[0]*ang_norm) , " [GeV/cm^2/s] = ", str(GeVtoerg(I[0])*ang_norm) , "[erg/cm^2/s]"]
 for i in fluxres1: f.write(i)
 for i in fluxres2: f.write(i)
+
+#****************************************************************
+#Fit with a power law (with exp cut)
+l = LeastSquares(d.emeans, d.flux, d.full_sigma , power_law) 
+m2 = Minuit(l, 1.0, 2.0 ,3.0e-7,  name=("alpha", "E_c", "norm" )) #following Dinsmore2022 notation
+
+#m.fixed["E_b", "n1", "n2"] = False
+
+m2.migrad()
+m2.hesse()
+f.write('\n************************************************* \n \n')
+f.write('Power Law (exp cutoff) results\n')
+f.write('Flux fit parameters (PL - exp. cut):'), f.write('\n')
+for key, value, error in zip(m2.parameters, m2.values, m2.errors):
+    line = [str(key), ' = ', str(value), ' +- ', str(error), '\n']
+    for i in line: f.write(i)
+#y, ycov = propagate(lambda norm, xb, n1, n2: broken_pl(d.emeans, norm, xb, n1, n2)[1], m.values, m.covariance)
+#****************************************************************
+#Calculation of the total flux
+I = log_scale_int(power_law, e_min, e_max, tuple(m2.values),inf_approx, abs_err, rel_err, div_numb)
+#I = integrate.quad(broken_pl, e_min, e_max, args=tuple(m.values), epsabs = abs_err, epsrel = rel_err, limit=div_numb)
+#print(I[0], "  ", I[1])
+f.write('--------------------------------------------------------\n\n')
+fluxres1 =["Flux (in sr units): \nF_Omega =" , str(I[0]), " [GeV/cm^2/s/sr] = ", str(GeVtoerg(I[0])) , "[erg/cm^2/s/sr]", '\n']
+fluxres2 =["Flux: \nF =" , str(I[0]*ang_norm) , " [GeV/cm^2/s] = ", str(GeVtoerg(I[0])*ang_norm) , "[erg/cm^2/s]"]
+for i in fluxres1: f.write(i)
+for i in fluxres2: f.write(i)
+
 
 #****************************************************************
 #PLOTS
@@ -147,6 +176,56 @@ plt.legend()
 plt.savefig(os.path.join('flux.png'))
 
 #----------------------------------------------------------------------------
+
+
+#****************************************************************
+spec = np.divide(d.flux, np.multiply(d.emeans, d.emeans))
+spec_err = np.divide(d.full_sigma, np.multiply(d.emeans*ang_norm, d.emeans))
+
+#Fit with a broken power law
+l = LeastSquares(d.emeans, spec, spec_err , broken_pl_arr) 
+m2 = Minuit(l, 1.9e-7, 2.5, 1.42, 2.63, name=("K", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
+
+m2.fixed["K", "n1", "n2"] = False
+
+m2.migrad()
+m2.hesse()
+
+#m2.values[2], m2.values[3] = m2.values[2]+2 , m2.values[3]+2  #to be better compared with Dinsmore values
+f.write('\n\n----------------------------------\n')
+f.write('Spectrum fit parameters:'), f.write('\n')
+for key, value, error in zip(m2.parameters, m2.values, m2.errors):
+    line = [str(key), ' = ', str(value), ' +- ', str(error), '\n']
+    for i in line: f.write(i)
+#m2.values[2], m2.values[3] = m2.values[2]-2 , m2.values[3]-2  #go back to fit values
+
+
+#plot
+x_min = 1.0e-1
+x_max = 1.0e2
+y_min = 1.0e-9
+y_max =1.0e-5
+en = np.geomspace(x_min, x_max)
+spec_fit = broken_pl_arr(en, *m2.values)
+fig, ax = plt.subplots()
+
+ax.loglog()
+ax.set_xlim(x_min, x_max)
+ax.set_ylim(y_min, y_max)
+ax.set_xlabel(r'Energy $E_\gamma$ [GeV]')
+ax.set_ylabel(r'Spec dN/dE [$\mathregular{cm^2}$ / s / GeV]')
+
+ax = plt.errorbar(d.emeans,np.multiply(spec,1.0), yerr = spec_err,
+color='black', capsize=1, capthick=1,ls='',
+elinewidth=0.5,marker='o',markersize=3, label='Spectrum')
+
+plt.plot(en, spec_fit, color = "red", ls='-.', label = 'Broken power law fit')
+
+plt.legend()
+
+plt.savefig(os.path.join('spec_bpl.png')) 
+
+
 f.close()
 end_time = time.monotonic()
 print(timedelta(seconds= end_time - start_time))

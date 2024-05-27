@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 import os
 
-test_numb = 6
-
+test_numb = 2
 #------------------------------------------
 #some usefull constants/bounds
 

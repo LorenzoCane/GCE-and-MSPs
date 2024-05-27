@@ -44,7 +44,7 @@ l_max = b_max                      #ROI long. max value
 
 #astronomical constants
 rs = 20            #kpc            #scale radius (gNFW) 
-g = 1.2            #kpc            #gamma-sloper (gNFW) 
+g = 1.2            #kpc            #gamma-slope (gNFW) 
 rc = 8.5           #kpc            #Earth-GC distance
 f_obs = 1.8e-9     #erg s^(-1)     #observed flux 
 
@@ -57,7 +57,7 @@ den = 4* integrate.nquad(sgNRW, [[1.0e-6 , np.infty], [l_min, l_max], [b_min, b_
 #!!! den is given in kpc^-2 !!!!
 r = cmtokpc(cmtokpc(num[0] / den[0] / 4 /np.pi))       #cm^(-2)        #flux/lum ratio
 
-line = ['Flux/Lum ratio: ', '\n','F/L = ', str(r), ' cm^(-2) \n']
+line = ['Flux/Lum ratio: ', '\n','F/Ls = ', str(r), ' cm^(-2) \n']
 for l in line:
     f.write(l)
 
@@ -180,7 +180,7 @@ l_b_nptf = 2.5e34
 norm_nptf= (1-n1_nptf)*(1-n2_nptf) / l_b_nptf / (n1_nptf - n2_nptf)
 p_nptf = []
 
-p_nptf = broken_pl_arr(l, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
+p_nptf = broken_pl(l, norm_nptf, l_b_nptf, n1_nptf, n2_nptf)
 
 #Search of integral upper bound
 #int_max = 1.0e34
@@ -217,7 +217,7 @@ a = (n1_disk - n2_disk) - (1-n2_disk)*(l_m_disk/l_b_disk)**(1-n1_disk)+ (1-n1_di
 norm_disk = (1-n1_disk)*(1-n2_disk) / l_b_disk / (n1_disk - n2_disk)
 
 
-p_disk = broken_pl_arr(l, norm_disk, l_b_disk, n1_disk, n2_disk)
+p_disk = broken_pl(l, norm_disk, l_b_disk, n1_disk, n2_disk)
 
 
 norm_disk_lim = (1-n1_disk)*(1-n2_disk) / l_b_disk / a
