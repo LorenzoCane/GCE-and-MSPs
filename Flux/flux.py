@@ -68,7 +68,6 @@ class Data(object):
 
 
 d = Data() 
-spec = np.divide(d.flux, d.emeans)
 #****************************************************************
 #Fit with a broken power law
 l = LeastSquares(d.emeans, d.flux, d.full_sigma , broken_pl_arr) 
@@ -98,7 +97,7 @@ fluxres2 =["Flux: \nF =" , str(I[0]*ang_norm) , " [GeV/cm^2/s] = ", str(GeVtoerg
 for i in fluxres1: f.write(i)
 for i in fluxres2: f.write(i)
 
-#****************************************************************
+'''#****************************************************************
 #Fit with a power law (with exp cut)
 l = LeastSquares(d.emeans, d.flux, d.full_sigma , power_law) 
 m2 = Minuit(l, 1.0, 2.0 ,3.0e-7,  name=("alpha", "E_c", "norm" )) #following Dinsmore2022 notation
@@ -126,7 +125,7 @@ for i in fluxres1: f.write(i)
 for i in fluxres2: f.write(i)
 
 
-#****************************************************************
+#****************************************************************'''
 #PLOTS
 
 #Flux in sr units
@@ -174,30 +173,7 @@ plt.plot(en, np.multiply(flux_fit, ang_norm), color = "red", ls='-.', label = 'B
 plt.legend()
 
 plt.savefig(os.path.join('flux.png'))
-
-#----------------------------------------------------------------------------
-
-
 #****************************************************************
-spec = np.divide(d.flux, np.multiply(d.emeans, d.emeans))
-spec_err = np.divide(d.full_sigma, np.multiply(d.emeans*ang_norm, d.emeans))
-
-#Fit with a broken power law
-l = LeastSquares(d.emeans, spec, spec_err , broken_pl_arr) 
-m2 = Minuit(l, 1.9e-7, 2.5, 1.42, 2.63, name=("K", "E_b", "n1", "n2" )) #following Dinsmore2022 notation
-
-m2.fixed["K", "n1", "n2"] = False
-
-m2.migrad()
-m2.hesse()
-
-#m2.values[2], m2.values[3] = m2.values[2]+2 , m2.values[3]+2  #to be better compared with Dinsmore values
-f.write('\n\n----------------------------------\n')
-f.write('Spectrum fit parameters:'), f.write('\n')
-for key, value, error in zip(m2.parameters, m2.values, m2.errors):
-    line = [str(key), ' = ', str(value), ' +- ', str(error), '\n']
-    for i in line: f.write(i)
-#m2.values[2], m2.values[3] = m2.values[2]-2 , m2.values[3]-2  #go back to fit values
 
 
 #plot
