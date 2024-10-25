@@ -23,7 +23,7 @@ from gce import broken_pl, log_norm
 start_time = time.monotonic()
 
 
-exercise = 4    #to execute only one exercise at time
+exercise = 8  #to execute only one exercise at time
 #1 -2 : reproducing simple distribution sample 
 #3 : Rej-Acc method(1 sample)
 #4 : Rej-Acc method multiple sample
@@ -715,14 +715,14 @@ elif exercise == 8 :
     #drawing instructions
     draw = np.geomspace(x_min, x_max, 10000)
     draw_min = 1.0e29
-    draw_max = 1.0e38
+    draw_max = 1.0e36
     fig, ax = plt.subplots()
     ax.set_xlim(draw_min, draw_max)
     plt.ylim(1.0e-45 , 1.2e-27)
 
  #-----------------------------------------------
-    sample_dim = 1.0e5           
-    n_bins = 25
+    sample_dim = 1.0e5        
+    n_bins = 100
 
  #-----------------------------------------------
     test_func = 4
@@ -743,7 +743,7 @@ elif exercise == 8 :
         myfunc = log_norm
  #--------------------------
 
-    cum_points = np.geomspace(x_min, x_max, n_bins, endpoint = False)    #points where to evaluate cum funct (to be fixed)
+    cum_points = np.logspace(np.log10(x_min), np.log10(x_max), n_bins, endpoint = False)    #points where to evaluate cum funct (to be fixed)
     norm = log_scale_int(myfunc, x_min, x_max, arg)[0]
 
     bin_dim = np.ones(n_bins)                           #bins width
@@ -769,28 +769,34 @@ elif exercise == 8 :
         x[i] = cum_values[step]
         y_n[step] +=1
 
+    vector_func = np.vectorize(myfunc)
+
+    cum_chi = chisq(cum_points[1:], y_n[1:]*norm*(1.0/bin_dim[1:])/sample_dim, myfunc, (arg))
+    print("Chi_sq =", cum_chi[0])
+
  #-----------------------------------------------
   #print controls
     #print(cum_points)
     #print(bin_dim)
-    print(cum_values)
+    #print(cum_values)
     #print(y_n)
 
  #-----------------------------------------------
     #plot
-    vector_func = np.vectorize(myfunc)
+
     y_draw = vector_func(draw, *arg)
-   
-    ax.loglog(draw, y_draw/norm, color = "black", label = "function f(x)")
+    ax.loglog(draw, y_draw/norm, color = "black", label = "AIC - LF")
 
     y_err = y_n ** 0.5
     #count, bins, ignored = ax.hist(x, n_bins, density=True)
-    ax.errorbar(cum_points[1:], y_n[1:]*(1.0/bin_dim[1:])/sample_dim, yerr = y_err[1:]*(1.0/bin_dim[1:])/sample_dim, color='r', capsize=1, capthick=1,ls='--', elinewidth=0.5,marker='o',markersize=3, label = 'MCS (Inv func + cum)')
+    ax.errorbar(cum_points[1:], y_n[1:]*(1.0/bin_dim[1:])/sample_dim, yerr = y_err[1:]*(1.0/bin_dim[1:])/sample_dim, color='r', capsize=1, capthick=1,ls='', elinewidth=0.5,marker='o',markersize=3, label = 'MCS')
     title = "IF(cumulative func) - N_sample = " + str(int(sample_dim)) + ", N_bins = " + str(n_bins)
-    ax.set_title(title)
+    ax.set_xlabel(r'L [erg s$^{-1}$]')
+    ax.set_ylabel(r'dN/dL [erg s$^{-1}$]$^{-1}$')
+    #ax.set_title(title)
 
     plt.legend()
-    plt.savefig(os.path.join("inv_func_sample_lum_func.png"))
+    plt.savefig(os.path.join("inv_func_sample_lum_func.pdf"))
 
 #**************************************************************
 #COMPARING (simple func)
@@ -798,11 +804,11 @@ elif exercise == 9:
     x_min = -1.0                    #interval of interest
     x_max = 1.0
  #drawing and plot
-    draw = np.linspace(x_min, x_max, 10000)
+    draw = np.linspace(x_min, x_max, 1000)
     fig, (ax1, ax2, ax3) = plt.subplots(3)
 
  #-----------------------------------------------
-    sample_dim = 1.0e4                  #sample dimension
+    sample_dim = 1.0e3                #sample dimension
     n_bins = round(sample_dim**0.5)         #number of bins
     bin_dim = (x_max - x_min) / n_bins      #bins width
 
@@ -976,7 +982,7 @@ elif exercise == 9:
     plt.suptitle(fig_title)
     fig.tight_layout()
     plt.subplots_adjust(right = 0.73)
-    plt.savefig(os.path.join("comparing.png"))
+    plt.savefig(os.path.join("comparing1000.pdf"))
 
 #**************************************************************
 #COMPARING (simple func)

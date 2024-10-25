@@ -18,6 +18,7 @@ sys.path.insert(0, '/home/lorenzo/GCE-and-MSPs/toolbox')
 from gce import gNRW2, sgNRW, power_law, log_norm, broken_pl, l_log, l_bpl
 from tools import cmtokpc, log_scale_int, mygamma_inc
 
+broken_pl = np.vectorize(broken_pl)
 #****************************************************************************
 #USEFUL VALUES AND DEF
 start_time = time.monotonic()
@@ -258,9 +259,9 @@ ax1.set_yticks(np.geomspace(1.0e-45, 1.e-29, 5))
 ax1.set_xticks(np.geomspace(1.0e30, 1.0e38, 5))
 ax2.set_xticks(np.geomspace(1.0e-15, 1.0e-9, 4))
 
-ax1.set_xlabel("Luminosity L [erg / s]")
-ax2.set_xlabel(r'Flux F [erg / $\mathregular{cm^2}$ / s]') 
-ax1.set_ylabel(r'dN / dL')
+ax1.set_xlabel(r' L [erg s$^{-1}$]')
+ax2.set_xlabel(r' F [erg  cm$^{-2}$  s${-1}$]') 
+ax1.set_ylabel(r'dN / dL [erg s$^{-1}$]$^{-1}$')
 
 plt.ylim(1.0e-45 , 1.2e-27)
 ax1.set_xlim(min, max)
@@ -289,9 +290,9 @@ ax3.set_yticks(np.geomspace(1.0e-7, 1.0e2, 4))
 ax3.set_xticks(np.geomspace(1.0e30, 1.0e38, 5))
 ax4.set_xticks(np.geomspace(1.0e-15, 1.0e-9, 4))
 
-ax3.set_xlabel("Luminosity L [erg / s]")
-ax4.set_xlabel(r'Flux F [erg / $\mathregular{cm^2}$ / s]')
-ax3.set_ylabel("LdN / dL [erg / s]")
+ax3.set_xlabel(r' L [erg s$^{-1}$]')
+ax4.set_xlabel(r' F [erg  cm$^{-2}$  s${-1}$]') 
+ax3.set_ylabel(r'L dN / dL')
 
 plt.ylim(1.0e-7, 1.0e3)
 ax3.set_xlim(min, max)
@@ -320,9 +321,9 @@ ax5.set_yticks(np.geomspace(1.0e28, 1.0e34, 3))
 ax5.set_xticks(np.geomspace(1.0e30, 1.0e38, 5))
 ax6.set_xticks(np.geomspace(1.0e-15, 1.0e-9, 4))
 
-ax5.set_xlabel("Luminosity L [erg / s]")
-ax6.set_xlabel(r'Flux F [erg / $\mathregular{cm^2}$ / s]')
-ax5.set_ylabel(r' $\mathregular{L^2}$ dN / dL [$\mathregular{erg^2}$ / $\mathregular{s^2}$]')
+ax5.set_xlabel(r' L [erg s$^{-1}$]')
+ax6.set_xlabel(r' F [erg  cm$^{-2}$  s${-1}$]') 
+ax5.set_ylabel(r' L$^2$ dN / dL [erg  s$^{-1}$]')
 
 plt.ylim(1.0e27, 1.0e35)
 ax5.set_xlim(min, max)
